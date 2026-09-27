@@ -5,6 +5,8 @@ on:
       api_base:
         description: API base URL
         default: https://spauxptabyipnhjgboxm.supabase.co/functions/v1/api
+permissions:
+  contents: write
 jobs:
   e2e:
     runs-on: ubuntu-latest
@@ -14,6 +16,19 @@ jobs:
         with:
           node-version: 22
       - name: Run backend/test/e2e.mjs
-        run: node backend/test/e2e.mjs
+        id: e2e
+        run: |
+          set -o pipefail
+          node backend/test/e2e.mjs 2>&1 | tee e2e-output.txt
         env:
           API_BASE: ${{ inputs.api_base }}
+      - name: Publish output to e2e-results branch
+        if: always()
+        run: |
+          mkdir -p /tmp/out && cp e2e-output.txt /tmp/out/ || true
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan e2e-results
+          git rm -rfq . >/dev/null 2>&1 || true
+          cp /tmp/out/e2e-output.txt . && echo "${{ github.run_id }}" > run_id.txt
+          git add e2e-output.txt run_id.txt && git commit -qm "e2e output for run ${{ github.run_id }}"
+          git push -f origin e2e-results
