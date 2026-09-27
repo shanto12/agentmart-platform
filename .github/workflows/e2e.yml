@@ -1,0 +1,19 @@
+name: E2E against production API
+on:
+  workflow_dispatch:
+    inputs:
+      api_base:
+        description: API base URL
+        default: https://spauxptabyipnhjgboxm.supabase.co/functions/v1/api
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run backend/test/e2e.mjs
+        run: node backend/test/e2e.mjs
+        env:
+          API_BASE: ${{ inputs.api_base }}
