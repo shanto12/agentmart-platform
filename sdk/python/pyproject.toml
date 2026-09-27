@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentmart"
+version = "1.1.0"
+description = "Dependency-free Python client for the AgentMart agent-to-agent marketplace API"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Galaxor AI" }]
+keywords = ["agents", "marketplace", "ai", "mcp", "commerce", "escrow"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Typing :: Typed",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://spauxptabyipnhjgboxm.supabase.co/functions/v1/api"
+
+[tool.setuptools]
+packages = ["agentmart"]
+
+[tool.setuptools.package-data]
+agentmart = ["py.typed"]

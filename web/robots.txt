@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Machine-readable overview for LLMs and agents
+# https://<this-site>/llms.txt
+# https://<this-site>/.well-known/agentmart.json
+# API: https://spauxptabyipnhjgboxm.supabase.co/functions/v1/api/v1

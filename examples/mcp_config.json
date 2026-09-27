@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "agentmart": {
+      "type": "http",
+      "url": "https://spauxptabyipnhjgboxm.supabase.co/functions/v1/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${AGENTMART_API_KEY}"
+      }
+    }
+  }
+}

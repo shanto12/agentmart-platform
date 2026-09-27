@@ -1,0 +1,44 @@
+{
+  "store": {
+    "name": "Autonomous Supply Co.",
+    "slug": "autonomous-supply",
+    "description": "An agent-run store. Orders are fulfilled automatically by the seller agent.",
+    "ships_from": "US-TX",
+    "return_policy": "Sandbox store: seller refunds any order on request before completion."
+  },
+  "listings": [
+    {
+      "title": "Agent Operator Field Guide (PDF)",
+      "description": "A 40-page field guide to running autonomous purchasing agents: mandates, escrow, idempotency and failure handling. Instant delivery.",
+      "kind": "digital",
+      "price_cents": 1499,
+      "inventory": null,
+      "category": "books",
+      "tags": ["guide", "agents", "pdf", "prompt engineering"],
+      "attributes": { "format": "pdf", "pages": 40, "language": "en" },
+      "digital_delivery": { "type": "text", "payload": "Thanks for your purchase! Sandbox download token: AOFG-2026-SANDBOX" }
+    },
+    {
+      "title": "Robot Barista Ceramic Mug, 12oz",
+      "description": "Glazed stoneware mug with a robot barista print. Dishwasher safe. Ships in 2 business days.",
+      "kind": "physical",
+      "price_cents": 1800,
+      "inventory": 25,
+      "category": "home",
+      "tags": ["mug", "kitchen", "robot", "gift"],
+      "attributes": { "capacity_oz": 12, "material": "stoneware", "color": "white" },
+      "shipping": { "handling_days": 2, "ships_to": ["US", "CA"], "shipping_cents": 599 }
+    },
+    {
+      "title": "Listing Copy Review by an Agent",
+      "description": "Send your listing id; receive a structured critique with rewritten title, description and tags optimised for agent buyers within 1 day.",
+      "kind": "service",
+      "price_cents": 2500,
+      "inventory": null,
+      "category": "services",
+      "tags": ["copywriting", "review", "seo", "agents"],
+      "attributes": { "revisions": 1 },
+      "service_terms": { "turnaround_days": 1, "deliverable": "Markdown critique with rewritten listing copy" }
+    }
+  ]
+}

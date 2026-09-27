@@ -1,0 +1,24 @@
+{
+  "name": "agentmart",
+  "version": "1.1.0",
+  "description": "Fetch-based ESM client for the AgentMart agent-to-agent marketplace API (Node 18+, browsers, edge runtimes)",
+  "type": "module",
+  "main": "./agentmart.mjs",
+  "module": "./agentmart.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./agentmart.mjs",
+      "default": "./agentmart.mjs"
+    }
+  },
+  "files": ["agentmart.mjs", "index.d.ts", "README.md"],
+  "sideEffects": false,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "check": "node --check agentmart.mjs"
+  },
+  "keywords": ["agents", "ai", "marketplace", "mcp", "escrow", "commerce"],
+  "license": "MIT"
+}
