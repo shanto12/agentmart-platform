@@ -1,0 +1,313 @@
+AgentMart e2e against https://spauxptabyipnhjgboxm.supabase.co/functions/v1/api (run 7607eee7)
+
+== Discovery
+  PASS  GET / returns service descriptor
+  PASS  X-Request-Id header present
+  PASS  GET /v1 returns descriptor
+  PASS  OpenAPI 3.1 document
+  PASS  OpenAPI covers >= 30 operations
+  PASS  llms.txt is text
+  PASS  well-known manifest
+  PASS  CORS allows PUT
+  PASS  CORS preflight
+  PASS  inbound X-Request-Id echoed
+  PASS  GET /v1/stats
+  PASS  unknown route -> 404 not_found error format
+  PASS  seed demo listings present
+
+== Registration & auth
+  PASS  register without name -> 400 invalid_request
+  PASS  register with non-https webhook -> 400
+  PASS  malformed JSON -> 400
+  PASS  register seller A -> 201
+  PASS  register buyer B -> 201
+  PASS  token exchange
+  PASS  GET /v1/me with JWT
+  PASS  GET /v1/me includes default mandate
+  PASS  GET /v1/me with API key
+  PASS  no auth -> 401 unauthorized
+  PASS  unknown api key -> 401
+  PASS  tampered JWT -> 401
+  PASS  token exchange with mismatched agent_id -> 401
+  PASS  token exchange with wrong key -> 401
+
+== Profile, keys & rate-limit headers
+  PASS  PATCH /v1/me
+  PASS  X-RateLimit-Limit 120 for agents
+  PASS  X-RateLimit-Remaining decrements
+  PASS  X-RateLimit-Limit 60 for unauthenticated
+  PASS  create extra key
+  PASS  list keys (no secrets)
+  PASS  revoke key
+  PASS  revoked key -> 401
+  PASS  JWT minted from revoked key -> 401
+  PASS  cannot revoke last active key -> 409
+
+== Mandate
+  PASS  GET mandate defaults
+  PASS  PUT mandate with bad kind -> 400
+  PASS  PUT mandate
+
+== Stores & listings
+  PASS  create listing without store -> 403
+  PASS  create store
+  PASS  second store for same agent -> 409
+  PASS  duplicate slug -> 409
+  PASS  invalid slug -> 400
+  PASS  PATCH /v1/stores/me
+  PASS  create physical listing
+  PASS  create digital listing (owner sees payload)
+  PASS  create service listing
+  PASS  physical without inventory -> 400
+  PASS  title > 140 chars -> 400
+  PASS  price < 50 -> 400
+  PASS  price > 10M -> 400
+  PASS  > 10 tags -> 400
+  PASS  digital without digital_delivery -> 400
+  PASS  shipping on service -> 400
+  PASS  bad kind -> 400
+  PASS  full-text search finds all 3 kinds
+  PASS  public listings never expose digital payload
+  PASS  kind filter
+  PASS  sort price_desc
+  PASS  store + price range filters
+  PASS  category filter
+  PASS  search matches description words
+  PASS  pagination with next_cursor
+  PASS  limit > 100 -> 400
+  PASS  listing detail: readiness + seller, no payload
+  PASS  GET /v1/stores/{slug} with listings
+  PASS  non-owner PATCH listing -> 403
+  PASS  owner PATCH listing
+
+== Wallet & deposits
+  PASS  deposit 100000
+  PASS  deposit > 100000 per call -> 400
+  PASS  negative deposit -> 400
+  PASS  idempotent deposit replay returns original
+  PASS  replay did not double-credit
+  PASS  same key, different body -> 409
+  PASS  lifetime faucet cap enforced
+
+== Buy digital (instant delivery & settlement)
+  PASS  digital order -> completed instantly
+  PASS  digital delivery payload returned to buyer
+  PASS  order totals & fee
+  PASS  order events paid->fulfilled->completed
+  PASS  seller credited total minus 5% fee (2850)
+  PASS  buyer debited
+  PASS  seller cannot see digital delivery payload
+  PASS  non-party cannot read order -> 404
+
+== Buy physical (escrow) -> fulfil -> confirm -> release
+  PASS  physical without shipping_address -> 400
+  PASS  ships_to enforced -> 400
+  PASS  quantity > inventory -> 409 out_of_stock
+  PASS  physical order -> paid (held)
+  PASS  shipping_address on order
+  PASS  buyer funds moved to held
+  PASS  inventory decremented
+  PASS  confirm before fulfil -> 409
+  PASS  buyer cannot fulfil -> 403
+  PASS  fulfil without tracking_number -> 400
+  PASS  seller fulfils -> fulfilled
+  PASS  physical auto-release ~7 days
+  PASS  seller cannot confirm -> 403
+  PASS  buyer confirms -> completed
+  PASS  seller received 2500 - 100 fee
+  PASS  buyer held released
+  PASS  double confirm -> 409
+
+== Sold out, cancel, refund & restock
+  PASS  buy last unit
+  PASS  listing sold_out at 0 inventory
+  PASS  buy sold-out listing -> 409 out_of_stock
+  PASS  buyer cancels paid order
+  PASS  cancel refunds buyer in full
+  PASS  cancel restocks & reactivates listing
+  PASS  cancel twice -> 409
+  PASS  service order -> paid
+  PASS  buyer cannot refund -> 403
+  PASS  seller refunds paid order
+  PASS  service fulfil needs deliverable -> 400
+  PASS  service fulfilled, auto-release ~3 days
+  PASS  dispute requires reason -> 400
+  PASS  buyer disputes -> disputed
+  PASS  disputed funds stay frozen in held
+  PASS  cannot confirm disputed order -> 409
+  PASS  seller refunds disputed order
+  PASS  buyer whole after refunds
+
+== Guardrails: own listing, paused, 402, mandate
+  PASS  buying own listing -> 403 forbidden
+  PASS  pause listing
+  PASS  buy paused listing -> 409
+  PASS  paused listing hidden from search
+  PASS  unknown listing -> 404
+  PASS  insufficient funds -> 402
+  PASS  order over max_order_cents -> 403 mandate_exceeded
+  PASS  disallowed kind -> 403 mandate_exceeded
+  PASS  rolling 24h daily limit -> 403 mandate_exceeded
+  PASS  rejected orders moved no money
+
+== Idempotent order creation
+  PASS  replay returns same order
+  PASS  charged exactly once
+  PASS  same key, different body -> 409
+  PASS  concurrent same-key requests create one order
+
+== Order listing & events
+  PASS  GET /v1/orders?role=buyer
+  PASS  GET /v1/orders?role=seller&status=completed
+  PASS  invalid status filter -> 400
+  PASS  seller events feed
+  PASS  events since=<evt_id>
+  PASS  buyer does not see seller-only events
+  PASS  POST /v1/admin/sweep
+
+== MCP
+  PASS  initialize
+  PASS  notifications/initialized -> 202 no body
+  PASS  ping
+  PASS  tools/list has all 12 v1 tools with schemas
+  PASS  tools/call search_listings (unauthenticated)
+  PASS  tools/call create_order (digital, instant)
+  PASS  tools/call get_order
+  PASS  auth-required tool without auth -> isError
+  PASS  tool business error surfaces as isError (own listing)
+  PASS  unknown tool -> JSON-RPC error -32602
+  PASS  unknown method -> -32601
+  PASS  parse error -> -32700
+  PASS  tools/call register_agent (unauthenticated)
+  PASS  tools/call deposit_sandbox_funds
+  PASS  tools/call get_wallet
+  PASS  JSON-RPC batch
+  PASS  GET /mcp -> 405
+
+== v1.1 Agent email
+  PASS  register with email -> lower-cased
+  PASS  duplicate email (case-insensitive) -> 409
+  PASS  invalid email -> 400
+  PASS  GET /v1/me includes email
+  PASS  PATCH /v1/me sets email
+  PASS  PATCH /v1/me to a taken email -> 409
+  PASS  PATCH /v1/me clears email
+
+== v1.1 Product-first seed, categories, catalog
+  PASS  GET /v1/catalog (limit 200)
+  PASS  catalog items are compact with url/rating/shipping_cents
+  PASS  reseeded demo: >=16 physical, >=8 digital, >=2 services
+  PASS  demo prices within $5-$300 and physical inventory set
+  PASS  demo reviews seeded (rated demo listings)
+  PASS  catalog limit > 200 -> 400
+  PASS  catalog bad updated_since -> 400
+  PASS  GET /v1/categories (public)
+  PASS  categories are slugs
+  PASS  category filter accepts a name and normalises to slug
+  PASS  min_rating filter + sort=rating
+  PASS  min_rating out of range -> 400
+
+== v1.1 Store, listings, purchase hint
+  PASS  store object has rating
+  PASS  category normalised to slug on create
+  PASS  listing detail has purchase hint
+  PASS  digital purchase hint needs only listing_id
+  PASS  seller email never exposed publicly
+  PASS  GET /v1/stores/me includes paused listings
+  PASS  catalog updated_since returns recently changed listings
+
+== v1.1 Wallet: faucet flag, payment methods, withdraw
+  PASS  POST /v1/wallet/payment-methods -> 501 not_implemented (roadmap)
+  SKIP  faucet_enabled toggle (set PSQL to a psql command for the DB)
+  PASS  buyer D funded (sandbox)
+
+== v1.1 Reviews & ratings
+  PASS  buyer D orders kettle
+  PASS  review of a paid (unfulfilled) order -> 409
+  PASS  seller cannot review own sale -> 403
+  PASS  non-party review -> 404
+  PASS  rating outside 1..5 -> 400
+  PASS  title > 120 -> 400
+  PASS  buyer reviews fulfilled order -> 201
+  PASS  second review on same order -> 409
+  PASS  listing rating updated {4.0, 1}
+  PASS  review of completed digital order
+  PASS  store rating aggregates listings {4.5, 2}
+  PASS  review of disputed order allowed
+  PASS  GET listing reviews sort=lowest
+  PASS  listing reviews sort=highest + pagination
+  PASS  GET store reviews
+  PASS  reviews of unknown listing -> 404
+  PASS  non-seller cannot reply -> 403
+  PASS  reply requires body -> 400
+  PASS  seller replies
+  PASS  second reply -> 409
+  PASS  non-author edit -> 403
+  PASS  author edits review
+  PASS  listing rating recalculated after edit {1.5, 2}
+  PASS  review.created delivered to seller
+  PASS  review.replied delivered to reviewer
+  PASS  non-author delete -> 403
+  PASS  author deletes review
+  PASS  rating after delete {1.0, 1}
+  PASS  edit deleted review -> 404
+
+== v1.1 MCP tools
+  PASS  tools/list includes all 9 v1.1 tools (21 total)
+  PASS  list_categories
+  PASS  browse_catalog
+  PASS  get_reviews (listing)
+  PASS  get_reviews (store)
+  PASS  get_reviews without target -> isError
+  PASS  update_listing
+  PASS  get_my_store
+  PASS  update_store
+  PASS  cancel_order
+  PASS  refund_order
+  PASS  write_review
+  PASS  write_review requires auth
+
+== v1.1 Withdraw (sandbox) & ledger
+  PASS  seller E earnings
+  PASS  withdraw more than available -> 402
+  PASS  withdraw 0 -> 400
+  PASS  withdraw (sandbox) moves available out
+  PASS  withdraw idempotent replay
+  PASS  withdrawal recorded as negative payout entry
+  PASS  seller E: ledger sums match wallet after withdraw
+  PASS  buyer D: ledger sums match wallet
+
+== Ledger invariants
+  PASS  seller A: sum(available entries) == available_cents
+  PASS  seller A: sum(held entries) == held_cents
+  PASS  seller A: latest balance_after_cents matches wallet
+  PASS  seller A: ledger entry types valid
+  PASS  seller A: payouts == available balance
+  PASS  buyer B: sum(available entries) == available_cents
+  PASS  buyer B: sum(held entries) == held_cents
+  PASS  buyer B: latest balance_after_cents matches wallet
+  PASS  buyer B: ledger entry types valid
+  PASS  buyer B final balance matches expected
+  PASS  buyer B: deposits + escrow releases == balance
+  PASS  stats reflect completed orders
+
+== Archive
+  PASS  archive listing
+  PASS  archived listing -> 404 for public
+  PASS  buy archived listing -> 404
+
+== Webhooks (optional, local only)
+  SKIP  API does not accept http webhook URLs (expected in production)
+
+== v1.1 Stripe live funding (optional: needs API_BASE_LIVE)
+  SKIP  set API_BASE_LIVE (server with STRIPE_SECRET_KEY, STRIPE_API_BASE=fake, STRIPE_WEBHOOK_SECRET) to run
+
+== Rate limiting (429)
+  FAIL  exceeding 120/min -> 429 rate_limited
+  PASS  rate limit is per agent
+
+============================================================
+RESULT: 252/253 checks passed
+FAILED:
+  - [Rate limiting (429)] exceeding 120/min -> 429 rate_limited
+OVERALL: FAIL
