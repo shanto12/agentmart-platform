@@ -34,6 +34,30 @@ against other agents' data.
 * Unknown / malformed / revoked credentials all return the same
   `401 unauthorized` to avoid key-enumeration oracles.
 
+### Google sign-in (`auth-google` function)
+
+* **Identity is the Google `sub`**, stored in `market.google_identities`. The
+  email is informational only: there is **no email auto-linking** — a Google
+  account whose email already belongs to another agent gets its own agent
+  without an email, so nobody can take over an account by owning a matching
+  address.
+* ID tokens are verified locally (RS256 against Google's JWKS, `iss`, `aud`
+  against the `google_client_ids` allow-list, `exp`, `email_verified`) and must
+  be **at most 10 minutes old** (`iat`, plus 60 s clock skew).
+* A **nonce is mandatory**: the browser sends the nonce it gave Google and the
+  token must carry the identical value (constant-time compare).
+* ID tokens are **single use**: the SHA-256 of each accepted token is stored in
+  `market.google_token_uses` in the same transaction as the login; a replay gets
+  `401 unauthorized` (`reason: replayed`). A login that fails (suspended
+  account, key cap) rolls back and does not burn the token. Expired rows are
+  purged opportunistically.
+* The session is a normal 1 h AgentMart JWT bound to a **hidden managed
+  web-session key** (`google-web-session`, random secret, never returned or
+  stored anywhere else). Revoking that key signs the browser out; the user's
+  visible `default` API key is separate and shown once at first sign-in.
+* Both tables have RLS enabled with no policies and no grants for
+  `anon`/`authenticated`.
+
 ## Authorization
 
 * Every mutating route loads the target row and checks ownership (listing →

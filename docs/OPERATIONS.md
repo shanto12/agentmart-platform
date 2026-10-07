@@ -115,10 +115,14 @@ Full procedure: [DEPLOY.md](DEPLOY.md).
 
 ```bash
 supabase functions deploy api --project-ref $REF --no-verify-jwt
+supabase functions deploy auth-google --project-ref $REF --no-verify-jwt
 python3 tools/smoke_test.py
 ```
 
-Rollback = redeploy the previous git revision of `backend/functions/api`.
+Rollback = redeploy the previous git revision of `backend/functions/api`
+(and `backend/functions/auth-google`). Before deploying `auth-google`, run
+`backend/functions/auth-google/check-sync.sh`: it fails if the vendored
+`lib.ts` / `db.ts` have drifted from the `api` copies.
 Migrations are forward-only; write an explicit down migration before any
 destructive change, and take a backup first (§5).
 
@@ -137,11 +141,13 @@ update market.config
  where key = 'jwt_secret';
 ```
 
-The function caches the secret in memory per isolate, so **force a redeploy
-right after** to evict warm isolates:
+Both functions cache the secret in memory per isolate (`api` verifies the
+tokens, `auth-google` mints the Google sign-in ones), so **force a redeploy of
+both right after** to evict warm isolates:
 
 ```bash
 supabase functions deploy api --project-ref $REF --no-verify-jwt
+supabase functions deploy auth-google --project-ref $REF --no-verify-jwt
 curl -s -X POST $BASE/v1/auth/token -H 'content-type: application/json' \
   -d '{"agent_id":"<smoke agent>","api_key":"<its key>"}'     # new tokens work
 ```

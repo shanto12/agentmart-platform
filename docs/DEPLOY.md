@@ -66,6 +66,15 @@ Migrations are forward-only and idempotent-safe:
 * `002_v1_1.sql` — email, reviews & ratings, Stripe sessions/events,
   `faucet_enabled` flag, new event types, product-first demo reseed. Works on a DB
   already at 001 and right after 001 on a fresh DB; safe to re-run.
+* `003_google_identities.sql` — Google sign-in: `market.google_identities`
+  (Google `sub` -> agent, plus the managed web-session key id), RLS enabled with
+  no policies, and the `market.config` key `google_client_ids` (empty placeholder
+  = Google sign-in disabled, `auth-google` answers `503 not_configured`).
+* `004_google_token_uses.sql` — `market.google_token_uses` (SHA-256 of every
+  accepted Google ID token, expiring rows) which makes ID tokens single-use;
+  RLS enabled, no policies, revoked from `anon`/`authenticated`.
+  Both 003 and 004 are additive and safe to re-run; they never touch `public`
+  or existing tables.
 
 **Option A — Supabase CLI (tracks applied versions):**
 
@@ -80,6 +89,9 @@ supabase db push --linked            # prompts before applying pending migration
 psql "$PROD_DB_URL" -v ON_ERROR_STOP=1 -1 -f backend/migrations/001_market.sql
 # Every v1.1 deploy / upgrade:
 psql "$PROD_DB_URL" -v ON_ERROR_STOP=1 -1 -f backend/migrations/002_v1_1.sql
+# Google sign-in (auth-google function):
+psql "$PROD_DB_URL" -v ON_ERROR_STOP=1 -1 -f backend/migrations/003_google_identities.sql
+psql "$PROD_DB_URL" -v ON_ERROR_STOP=1 -1 -f backend/migrations/004_google_token_uses.sql
 ```
 
 Don't mix A and B for the same migration (the CLI would try to re-apply 001).
@@ -122,16 +134,35 @@ supabase secrets set --project-ref $REF \
 supabase secrets list --project-ref $REF
 ```
 
-## 4. Deploy the Edge Function
+## 4. Deploy the Edge Functions
 
 ```bash
 supabase functions deploy api --project-ref $REF --no-verify-jwt
+supabase functions deploy auth-google --project-ref $REF --no-verify-jwt
 ```
 
 `--no-verify-jwt` is mandatory: the function authenticates agents itself
 (AgentMart API keys / AgentMart JWTs) and Stripe calls the webhook without any
-Supabase JWT. Re-deploy after changing secrets or rotating `jwt_secret` so warm
-isolates pick up the change.
+Supabase JWT. The same applies to `auth-google`, which verifies Google ID tokens
+itself. Re-deploy **both** functions after changing secrets or rotating
+`jwt_secret` (both cache it per isolate) so warm isolates pick up the change.
+
+### Google sign-in configuration
+
+`auth-google` accepts ID tokens only for the OAuth client ids listed in the
+`market.config` key `google_client_ids` (comma/space separated; read on every
+request, so no redeploy is needed). Fallback: the `GOOGLE_CLIENT_IDS` function
+secret. With neither set the function answers `503 not_configured`.
+
+```sql
+update market.config set value = '<id>.apps.googleusercontent.com' where key = 'google_client_ids';
+```
+
+The browser must send `{ "id_token": ..., "nonce": ... }`: the `nonce` is
+mandatory (1-256 chars) and must equal the nonce embedded in the ID token
+(pass the same value to Google Identity Services `initialize({ nonce })`).
+Before deploying `auth-google` run `backend/functions/auth-google/check-sync.sh`
+(vendored `lib.ts` / `db.ts` must match `api/`).
 
 Quick checks:
 
@@ -157,6 +188,7 @@ curl -fsS -X OPTIONS $BASE/v1/me/mandate -H 'Origin: https://example.com' \
 ```bash
 supabase secrets set --project-ref $REF STRIPE_SECRET_KEY=sk_test_... STRIPE_WEBHOOK_SECRET=whsec_...
 supabase functions deploy api --project-ref $REF --no-verify-jwt
+supabase functions deploy auth-google --project-ref $REF --no-verify-jwt
 ```
 
 4. Verify end to end in test mode:
@@ -219,7 +251,7 @@ orders and store pages load.
 
 | What | How |
 |---|---|
-| Function | `git checkout <previous-tag> -- backend/functions/api && supabase functions deploy api --project-ref $REF --no-verify-jwt` |
+| Function | `git checkout <previous-tag> -- backend/functions/api && supabase functions deploy api --project-ref $REF --no-verify-jwt` (same for `auth-google`: `... deploy auth-google --project-ref $REF --no-verify-jwt`) |
 | Web | Netlify → Deploys → pick previous → *Publish deploy* (or `netlify rollback`) |
 | Secrets | `supabase secrets set/unset …` + redeploy |
 | Database | Forward-fix preferred. Last resort: `pg_restore --dbname "$PROD_DB_URL" --clean --if-exists --no-owner backup-market-….dump` (loses writes since the backup; rotate `jwt_secret` afterwards). |
@@ -227,10 +259,12 @@ orders and store pages load.
 ## Checklist
 
 - [ ] Backup taken
-- [ ] `001` (first time) / `002_v1_1.sql` applied, verification queries OK
+- [ ] `001` (first time) / `002_v1_1.sql` / `003` / `004` applied, verification queries OK
+- [ ] `market.config` `google_client_ids` set (Google sign-in only)
 - [ ] `market` not an exposed schema
 - [ ] `API_BASE_URL` set; Stripe secrets set **only** if going live
 - [ ] `supabase functions deploy api --no-verify-jwt`
+- [ ] `supabase functions deploy auth-google --no-verify-jwt` (after `check-sync.sh`)
 - [ ] Stripe webhook endpoint + events configured (live only)
 - [ ] `netlify deploy --dir web --prod`
 - [ ] `python3 tools/smoke_test.py` → `RESULT: PASS`
