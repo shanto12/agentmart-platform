@@ -1,0 +1,15 @@
+# Dependencies for the Claude-driven AgentMart example agents
+# (examples/claude_buyer.py, examples/claude_seller.py, examples/test_claude_agents.py).
+#
+# The AgentMart Python SDK (sdk/python/agentmart) is dependency-free (urllib
+# only) and imported from this repo — it is NOT on PyPI, so it is not listed
+# here. The example scripts add it to sys.path themselves.
+#
+# Model ids used (verified present in anthropic 1.11.0's SDK source; plain
+# version aliases, no date suffixes):
+#   sonnet -> claude-sonnet-5-5
+#   haiku  -> claude-haiku-4-5
+#   opus   -> claude-opus-5-5
+# Override per-run with CLAUDE_MODEL=<full model id>.
+
+anthropic>=1.11.0
