@@ -29,10 +29,20 @@ def no_hscroll(page, where):
     sw = page.evaluate("document.documentElement.scrollWidth"); cw = page.evaluate("document.documentElement.clientWidth")
     check(sw <= cw + 1, f"no horizontal scroll on {where} ({sw} <= {cw})")
 
+DEV_WORDS = re.compile(r"\b(test|tests|testing|demo|mock|sample|placeholder|prototype|todo)\b", re.I)
+def no_dev_words(page, where):
+    txt = page.inner_text("body")
+    hits = sorted(set(m.group(0) for m in DEV_WORDS.finditer(txt)))
+    check(not hits, f"no dev/test wording visible on {where} {hits}")
+
+def shot_launch(page, name, full=True):
+    page.wait_for_timeout(350)
+    page.screenshot(path=f"{SHOTS}/launch-{name}.png", full_page=full)
+
 def register(page, name):
     page.goto(U("console")); page.wait_for_selector("#regForm")
     page.fill("#rName", name)
-    page.fill("#rDesc", f"{name} test agent")
+    page.fill("#rDesc", f"{name} automation agent")
     page.fill("#rEmail", f"{name}@example.com")
     page.click("#regForm button[type=submit]")
     page.wait_for_selector(".secret .key code")
@@ -71,6 +81,17 @@ with sync_playwright() as p:
     check(page.locator("#homeStats .stat").count() == 5, "5 live stats tiles")
     check("sandbox" in page.inner_text(".topbar").lower(), "sandbox banner visible")
     check("© 2026 AgentMart · A Galaxor AI venture" in page.inner_text("footer"), "footer copyright")
+    check(page.inner_text(".topbar").strip() == "Public beta · Orders settle in sandbox credits while live payments roll out.", "beta banner copy")
+    foot = page.inner_text("footer")
+    check(all(x in foot for x in ["hello@agentmart.us", "support@agentmart.us", "shanto@agentmart.us"]), "footer contact emails")
+    check(page.locator("footer a[href='mailto:support@agentmart.us']").count() == 1, "footer mailto links")
+    check(page.locator("#contact .contact-list li").count() == 3, "home contact block")
+    check(page.get_attribute("link[rel=canonical]", "href") == "https://agentmart.us/" and page.get_attribute("meta[property='og:url']", "content") == "https://agentmart.us/", "canonical + og:url")
+    check("Beta activity" in page.inner_text("#view-home"), "stat strip labeled Beta activity")
+    check(page.locator("#freshGrid .example-stk").count() == page.locator("#freshGrid .pcard").count(), "home strip cards labeled Example")
+    page.click("#contact [data-copy-text='support@agentmart.us']"); page.wait_for_selector("#toast.show")
+    check(True, "contact copy button")
+    no_dev_words(page, "home")
     shot(page, "home-desktop")
 
     print("MARKET")
@@ -78,7 +99,10 @@ with sync_playwright() as p:
     page.wait_for_selector("#catChips .chip")
     n = page.locator("#grid .pcard").count(); check(n >= 12, f"market shows {n} live listings (first page)")
     check(page.locator("#grid .rating-line .stars-g").count() >= 5, "star ratings on cards")
-    check(page.locator("#grid .demo-stk").count() >= 1, "Demo sticker on demo listings")
+    check(page.locator("#grid .example-stk").count() == page.locator("#grid .pcard").count(), "every card carries the Example listing label")
+    check("illustrative examples" in page.inner_text("#view-market .beta-notice"), "marketplace beta notice")
+    check(page.locator("#grid .pcard h3", has_text="[Demo]").count() == 0 and page.locator("#grid .pcard h3", has_text="Lip Balm Set").count() == 1, "[Demo] prefix stripped from titles")
+    no_dev_words(page, "marketplace")
     shot(page, "market-desktop")
     page.fill("#q", "huila"); page.wait_for_function("document.querySelectorAll('#grid .pcard').length === 1")
     check(True, "search huila narrows to 1")
@@ -120,6 +144,11 @@ with sync_playwright() as p:
     check(page.locator("#revBox .rev").count() == 2 and page.locator("#revBox .reply").count() == 1, "listing reviews with seller reply")
     page.select_option("#revSort", "lowest"); page.wait_for_timeout(400)
     check("4/5" in page.inner_text("#revBox .rev >> nth=0"), "review sort lowest")
+    check("illustrative examples" in page.inner_text("#listingRoot .beta-notice"), "listing beta notice")
+    check(page.inner_text("#buyTitle") == "Try a sandbox purchase with your agent" and "no goods ship" in page.inner_text("#buy"), "buy panel retitled + disclosure")
+    check(page.locator(".gallery .example-stk").count() == 1, "listing Example label")
+    check("[Demo]" not in page.inner_text(".pd-info"), "[Demo] stripped from description")
+    no_dev_words(page, "listing detail")
     shot(page, "listing-desktop")
 
     print("SELLER: register, deposit, store, listings")
@@ -277,7 +306,7 @@ with sync_playwright() as p:
     check(page.locator("#txBox td .badge").count() >= 2, "ledger shows account column")
     page.fill("#wdAmt", "10"); page.click("#withdrawForm button[type=submit]"); page.click("#dlg button[value=ok]")
     page.wait_for_selector("#toast.show >> text=Withdrew $10.00"); check(True, "withdraw sandbox credits")
-    page.click("[data-pm-check]"); page.wait_for_function("document.querySelector('#pmResult').textContent.includes('Not yet available')")
+    page.click("[data-pm-check]"); page.wait_for_function("document.querySelector('#pmResult').textContent.includes('On the roadmap')")
     check(True, "payment-methods 501 surfaced")
     shot(page, "console-wallet-desktop")
     page.goto(U("listing/" + tote_id)); page.wait_for_selector("#revBox .reply")
@@ -286,6 +315,8 @@ with sync_playwright() as p:
     print("STORE PAGE + DEVELOPERS")
     page.goto(U("store/seller-bot-supply")); page.wait_for_selector("#storeRoot h1")
     check("Seller Bot Supply" in page.inner_text("#storeRoot h1"), "store page")
+    check("illustrative examples" in page.inner_text("#storeRoot .beta-notice"), "store beta notice")
+    no_dev_words(page, "store page")
     page.wait_for_selector("#srevBox .rev"); check(page.locator("#storeRoot .rating-line .stars-g").count() >= 1, "store rating + reviews")
     shot(page, "store-desktop")
     page.goto(U("store/does-not-exist")); page.wait_for_selector("#storeRoot .state")
@@ -294,9 +325,15 @@ with sync_playwright() as p:
     page.goto(U("developers")); page.wait_for_selector("#refBody .ep-row")
     check("Generated live" in page.inner_text("#refSource"), "endpoint reference generated from openapi.json")
     check(API + "/mcp" in page.inner_text("#devRoot"), "MCP endpoint shown")
+    check(page.locator("#dev-contact .contact-list li").count() == 3, "developers contact block")
+    no_dev_words(page, "developers")
     dev = page.inner_text("#devRoot")
     check("browse_catalog" in dev and "write_review" in dev and "/v1/catalog" in dev and "/v1/categories" in dev, "developers page lists catalog/categories/reviews + new MCP tools")
     shot(page, "developers-desktop")
+    page.goto(U("")); page.wait_for_selector("#freshGrid .pcard"); shot_launch(page, "home-desktop")
+    page.goto(U("market")); page.wait_for_selector("#grid .pcard"); page.click("#fReset"); page.wait_for_function("document.querySelectorAll('#grid .pcard').length >= 12"); page.evaluate("window.scrollTo(0,0)"); shot_launch(page, "market-desktop", full=False)
+    page.goto(U("listing/" + tote_id)); page.wait_for_selector("#revBox"); shot_launch(page, "listing-desktop")
+    page.goto(U("developers")); page.wait_for_selector("#dev-contact"); page.locator("#dev-contact").scroll_into_view_if_needed(); shot_launch(page, "developers-contact-desktop", full=False)
     page.goto(U("nowhere")); page.wait_for_selector("#view-notfound.active")
 
     # XSS probe: listing title with markup must render as text
@@ -320,6 +357,12 @@ with sync_playwright() as p:
     for name, h, sel in [("console-overview", "console/overview", "#mandateForm"), ("console-wallet", "console/wallet", "#txBox table"), ("console-orders", "console/orders", ".orow")]:
         mp.goto(U(h)); mp.wait_for_selector(sel); no_hscroll(mp, "mobile " + name); shot(mp, name + "-mobile")
     mp.click(".orow .ohead >> nth=0"); mp.wait_for_selector(".obody"); no_hscroll(mp, "mobile order detail"); shot(mp, "console-order-open-mobile")
+    for name, h, sel in [("home", "", "#homeStats .stat .val:not(:has(.skel))"), ("market", "market", "#grid .pcard"), ("listing", "listing/" + tote_id, "#revBox"), ("contact", "home/contact", "#contact")]:
+        mp.goto(U(h)); mp.wait_for_selector(sel)
+        if name == "contact":
+            mp.wait_for_timeout(800); mp.locator("#contact .contact-card").screenshot(path=f"{SHOTS}/launch-contact-mobile.png")
+        else:
+            shot_launch(mp, name + "-mobile")
     mp.goto(U("")); mp.click("#menuBtn"); mp.wait_for_selector("#mobileMenu.open"); shot(mp, "menu-mobile", full=False)
 
     # tablet sanity

@@ -86,7 +86,7 @@ const [hub] = seedStore("volt-bot", { slug: "volt-supply", name: "Volt Supply Co
   { kind: "physical", title: "USB-C 7-in-1 Hub, 4K HDMI, 100 W PD", description: "[Demo] Aluminium USB-C hub with 4K60 HDMI, 2× USB-A 3.2, SD/microSD and 100 W pass-through charging.", price_cents: 4900, inventory: 120, category: "electronics-accessories", tags: ["usb-c", "hub", "hdmi"], attributes: { Ports: "7", HDMI: "4K60", PD: "100 W" }, shipping: ship(1, 0) },
   { kind: "physical", title: "Reflective Dog Leash, 6 ft", description: "[Demo] Padded handle, reflective stitching and a rotating clasp.", price_cents: 1800, inventory: 80, category: "pet", tags: ["dog", "leash"], attributes: { Length: "6 ft" }, shipping: ship(2, 450) },
   { kind: "physical", title: "Rechargeable Camping Lantern, 1000 lm", description: "[Demo] Three light modes, 30-hour runtime, doubles as a power bank.", price_cents: 2900, inventory: 45, category: "outdoor", tags: ["camping", "lantern"], attributes: { Output: "1000 lm", Battery: "5200 mAh" }, shipping: ship(2, 600) },
-  { kind: "physical", title: "Lip Balm Set, 4 Flavours", description: "[Demo] Beeswax lip balms: mint, vanilla, citrus and unscented.", price_cents: 1200, inventory: 200, category: "beauty", tags: ["lip balm", "beeswax"], attributes: { Count: "4" }, shipping: ship(3, 300, ["US"]) },
+  { kind: "physical", title: "[Demo] Lip Balm Set, 4 Flavours", description: "[Demo] Beeswax lip balms: mint, vanilla, citrus and unscented.", price_cents: 1200, inventory: 200, category: "beauty", tags: ["lip balm", "beeswax"], attributes: { Count: "4" }, shipping: ship(3, 300, ["US"]) },
 ]);
 const [font] = seedStore("glyph-agent", { slug: "glyphworks", name: "Glyphworks Digital", description: "[Demo] Software licenses, eBooks, datasets and templates, delivered instantly.", ships_from: "Internet", return_policy: "Refund if not as described" }, [
   { kind: "digital", title: "Pantry Grotesk — Variable Font Family", description: "[Demo] A warm, chunky grotesk with a variable weight axis (200–800) and 540 glyphs covering 90+ Latin languages.", price_cents: 7900, inventory: null, category: "software", tags: ["font", "type", "variable"], attributes: { Formats: "OTF, TTF, WOFF2", Axes: "wght 200–800", Glyphs: "540" }, digital_delivery: { type: "license_key", payload: "DEMO-PANTRY-7Q2K-XX91" } },
@@ -430,7 +430,7 @@ async function handle(req, res) {
   throw new E("not_found", `No route for ${M} ${p}`);
 }
 
-const OPENAPI = { openapi: "3.1.0", info: { title: "AgentMart API (mock)", version: "1.1.0" }, security: [{ bearer: [] }], components: { securitySchemes: { bearer: { type: "http", scheme: "bearer" } } }, paths: {
+const OPENAPI = { openapi: "3.1.0", info: { title: "AgentMart API", version: "1.1.0" }, security: [{ bearer: [] }], components: { securitySchemes: { bearer: { type: "http", scheme: "bearer" } } }, paths: {
   "/v1/agents/register": { post: { tags: ["Auth"], summary: "Register an agent", security: [] } },
   "/v1/me": { get: { tags: ["Auth"], summary: "Current agent" }, patch: { tags: ["Auth"], summary: "Update current agent (name, email, webhook_url…)" } },
   "/v1/categories": { get: { tags: ["Discovery"], summary: "Categories", security: [] } },
