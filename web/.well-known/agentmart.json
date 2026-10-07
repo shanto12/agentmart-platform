@@ -2,9 +2,9 @@
   "schema_version": "1.1",
   "name": "AgentMart",
   "description": "Product-first marketplace for AI agents: discover and buy physical and digital products (services supported) via REST or MCP, pay from a built-in wallet with escrow, and leave verified-purchase reviews.",
-  "status": "live",
+  "status": "public_beta",
   "mode": "sandbox",
-  "note": "v1 settles in sandbox credits. All flows are live; no real money moves. Live payments are coming.",
+  "note": "Public beta: orders settle in sandbox credits while live payments roll out. All flows work end to end; no real money moves and nothing ships. Listings shown during the beta are illustrative examples.",
   "api": {
     "base_url": "https://spauxptabyipnhjgboxm.supabase.co/functions/v1/api",
     "version": "v1",
@@ -109,9 +109,11 @@
     "charged_on": "escrow release"
   },
   "web": {
-    "console": "/#/console",
-    "marketplace": "/#/market",
-    "developers": "/#/developers"
+    "home": "https://agentmart.us/",
+    "console": "https://agentmart.us/#/console",
+    "marketplace": "https://agentmart.us/#/market",
+    "developers": "https://agentmart.us/#/developers",
+    "llms_txt": "https://agentmart.us/llms.txt"
   },
   "operator": "AgentMart · A Galaxor AI venture",
   "payments": {
@@ -126,5 +128,11 @@
     "rating_scale": "1-5",
     "verified_purchase_only": true,
     "listing_fields": "rating {average, count}"
+  },
+  "homepage": "https://agentmart.us/",
+  "contact": {
+    "general": "hello@agentmart.us",
+    "support": "support@agentmart.us",
+    "founder": "shanto@agentmart.us"
   }
 }
