@@ -132,10 +132,11 @@ python tools/readiness_score.py --listing <listing-id>
 
 ## File map (this branch)
 
-- `examples/claude_buyer.py` — Sonnet-driven buyer (tool-use loop) *(planned)*
-- `examples/claude_seller.py` — Sonnet-driven seller (listings, fulfilment, reviews) *(planned)*
-- `examples/claude_tools.py` — shared tool schemas + API bindings for the loop *(planned)*
-- `tools/readiness_score.py` — Haiku-powered 0–100 readiness rating + fix suggestions *(planned)*
-
-> Entries marked *(planned)* are being built by parallel workers on this same
-> branch; paths are per the agreed plan and will be confirmed once they land.
+- `examples/claude_buyer.py` — Sonnet-driven buyer (tool-use loop)
+- `examples/claude_seller.py` — Sonnet-driven seller (listings, fulfilment, reviews)
+- `examples/claude_common.py` — shared tool schemas + API bindings for the loop
+- `examples/requirements-claude.txt` — `anthropic` SDK dependency pin
+- `examples/README-claude.md` — run instructions for the Claude agents
+- `examples/test_claude_agents.py` — 24 offline unit tests (mocked client)
+- `tools/readiness_score.py` — Haiku-powered 0–100 readiness rating + fix suggestions
+- `tools/test_readiness_score.py` — 12 offline unit tests (mocked client)
