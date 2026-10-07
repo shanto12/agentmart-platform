@@ -108,7 +108,7 @@ const FRIENDLY = {
   unauthorized: "That API key wasn't accepted. Sign in again.",
   rate_limited: "Too many requests. Wait a moment and try again.",
   internal: "The API had a problem on its side. Try again shortly.",
-  not_implemented: "This isn't available yet.",
+  not_implemented: "This feature isn't switched on for AgentMart right now.",
 };
 /**
  * api(path, {method, body, auth, idempotencyKey, query, quiet})
@@ -363,7 +363,7 @@ const ART = {
   server: (c1, c2) => [0, 1, 2].map(i => `<rect x="120" y="${66 + i * 58}" width="160" height="48" rx="12" fill="${i === 1 ? c2 : c1}" ${S}/><circle cx="146" cy="${90 + i * 58}" r="7" fill="#4FE3A1" ${S}/><circle cx="170" cy="${90 + i * 58}" r="7" fill="#FFE14D" ${S}/><path d="M204 ${90 + i * 58}h54" ${S} stroke-dasharray="4 7"/>`).join(""),
 };
 const ART_BY_KIND = { physical: ["mug", "beans", "pack", "plant", "candle", "headphones", "stickers"], digital: ["font", "template", "dataset", "api", "cassette"], service: ["translate", "design", "server"] };
-const ART_WORDS = [[/mug|cup|ceramic/, "mug"], [/coffee|bean|tea|grocer/, "beans"], [/bag|pack|tote|backpack/, "pack"], [/plant|garden|seed/, "plant"], [/candle|scent|soap|lantern|lamp|light/, "candle"], [/headphone|audio|speaker|mic|usb|hub|cable|charger|electronic/, "headphones"], [/leash|dog|cat|pet|organizer|desk/, "pack"], [/sticker|print|label|poster/, "stickers"], [/font|type/, "font"], [/template|doc|notion|pdf|e-?book|guide/, "template"], [/data|dataset|csv|index/, "dataset"], [/api|key|license|credit/, "api"], [/music|loop|sound|sample/, "cassette"], [/translat|language|locali/, "translate"], [/design|logo|brand|illustr/, "design"], [/host|server|compute|gpu|deploy|code|dev/, "server"]];
+const ART_WORDS = [[/mug|cup|ceramic/, "mug"], [/coffee|bean|tea|grocer/, "beans"], [/bag|pack|tote|backpack/, "pack"], [/plant|garden|seed/, "plant"], [/candle|scent|soap|lantern|lamp|light/, "candle"], [/headphone|audio|speaker|mic|usb|hub|cable|charger|electronic/, "headphones"], [/leash|dog|cat|pet|organizer|desk/, "pack"], [/sticker|print|label|poster/, "stickers"], [/font|type/, "font"], [/template|doc|notion|pdf|e-?book|guide/, "template"], [/data|dataset|csv|index/, "dataset"], [/api|key|license|credit/, "api"], [/music|loop|sound|audio pack/, "cassette"], [/translat|language|locali/, "translate"], [/design|logo|brand|illustr/, "design"], [/host|server|compute|gpu|deploy|code|dev/, "server"]];
 const BGS = ["#FFE14D", "#FFD6C4", "#D4DDFF", "#CFF7E4", "#FFB8D9", "#FFF3B0", "#C9B8FF", "#FFFDF8"];
 const C1S = ["#FF5B1F", "#2F5BFF", "#141210", "#4FE3A1", "#C9B8FF", "#FFE14D"];
 function hashStr(s) { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; }
@@ -377,18 +377,19 @@ function artFor(l) {
   if (!kind) kind = pool[hs % pool.length];
   const bg = BGS[hs % BGS.length];
   let c1 = C1S[(hs >> 3) % C1S.length]; if (c1 === bg) c1 = "#FF5B1F";
+  if (c1 === INK && (kind === "translate" || kind === "font" || kind === "api")) c1 = "#FFE14D"; // keep text legible
   let c2 = BGS[(hs >> 6) % BGS.length]; if (c2 === bg) c2 = PAPER;
   const mark = (l.title || "AM").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
   return { kind, bg, c1, c2, mark };
 }
 function artSVG(l) {
   const a = artFor(l), id = uid("f");
-  return raw(`<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc((l.title || "Listing") + " illustration")}"><defs><pattern id="${id}p" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="${INK}" opacity=".13"/></pattern><filter id="${id}" x="-20%" y="-20%" width="150%" height="150%"><feFlood flood-color="${INK}"/><feComposite in2="SourceAlpha" operator="in"/><feOffset dx="7" dy="7" result="s"/><feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="400" height="300" fill="${a.bg}"/><rect width="400" height="300" fill="url(#${id}p)"/><ellipse cx="200" cy="262" rx="120" ry="10" fill="${INK}" opacity=".12"/><g filter="url(#${id})">${ART[a.kind](a.c1, a.c2, a.mark)}</g></svg>`);
+  return raw(`<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(cleanCopy(l.title || "Listing") + " illustration")}"><defs><pattern id="${id}p" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="${INK}" opacity=".13"/></pattern><filter id="${id}" x="-20%" y="-20%" width="150%" height="150%"><feFlood flood-color="${INK}"/><feComposite in2="SourceAlpha" operator="in"/><feOffset dx="7" dy="7" result="s"/><feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="400" height="300" fill="${a.bg}"/><rect width="400" height="300" fill="url(#${id}p)"/><ellipse cx="200" cy="262" rx="120" ry="10" fill="${INK}" opacity=".12"/><g filter="url(#${id})">${ART[a.kind](a.c1, a.c2, a.mark)}</g></svg>`);
 }
 /* listing image: https image_url if present, else generated art */
 function listingMedia(l) {
   const src = safeUrl(l.image_url, true);
-  if (src) return h`<img src="${src}" alt="${l.title || "Listing image"}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="1">`;
+  if (src) return h`<img src="${src}" alt="${cleanCopy(l.title) || "Listing image"}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="1">`;
   return artSVG(l);
 }
 /* swap broken remote images for generated art (CSP-safe: no inline handlers) */
@@ -422,10 +423,27 @@ function lStore(l) {
     return_policy: st.return_policy || ss.return_policy || se.return_policy || "",
     completed_sales: se.completed_sales,
     member_since: se.member_since,
-    is_demo: !!(st.is_demo || se.is_demo),
+    seed: !!(st.is_demo || se.is_demo),
   };
 }
-const isDemo = l => !!(l && (l.is_demo || (l.store && l.store.is_demo) || (l.seller && l.seller.is_demo)));
+/* Seed data flag from the API (field name is_demo). During the public beta every listing is
+   presented as an illustrative example regardless, see EXAMPLE_LABEL below. */
+const isSeedData = l => !!(l && (l.is_demo || (l.store && l.store.is_demo) || (l.seller && l.seller.is_demo)));
+const EXAMPLE_LABEL = "Example listing";
+const BETA_NOTICE = "Listings shown during the beta are illustrative examples. Purchases use sandbox credits and nothing ships.";
+/* Strip a leading "[Demo]" / "[Test]" token from catalog copy for display. */
+function cleanCopy(s) { return String(s == null ? "" : s).replace(/^\s*\[(?:demo|test)\][\s:·—–-]*/i, ""); }
+function betaNoticeHTML() { return h`<div class="beta-notice" role="note">${icon("spark", 18)}<span>${BETA_NOTICE}</span></div>`; }
+
+/* ---------- Contact ---------- */
+const CONTACTS = [
+  ["General", "hello@agentmart.us", "Questions, partnerships and press"],
+  ["Support", "support@agentmart.us", "Help with agents, stores and orders"],
+  ["Founder", "shanto@agentmart.us", "Talk to the founder directly"],
+];
+function contactListHTML({ compact = false } = {}) {
+  return h`<ul class="contact-list${compact ? " compact" : ""}">${CONTACTS.map(([label, email, blurb]) => h`<li><span class="c-lab">${label}</span><a class="c-mail" href="mailto:${email}">${email}</a>${compact ? "" : h`<span class="c-blurb">${blurb}</span>`}<button type="button" class="btn btn-sm btn-ghost c-copy" data-copy data-copy-text="${email}" aria-label="Copy ${email}">Copy</button></li>`)}</ul>`;
+}
 function stockLabel(l) {
   if (l.status === "sold_out" || l.in_stock === false) return "Sold out";
   if (l.inventory === null || l.inventory === undefined) return l.kind === "physical" ? "" : "Unlimited";
@@ -462,9 +480,9 @@ function cardHTML(l) {
   const ready = l.agent_readiness;
   const ship = l.kind === "physical" && l.shipping && l.shipping.shipping_cents !== undefined ? (Number(l.shipping.shipping_cents) ? "+ " + money(l.shipping.shipping_cents) + " shipping" : "Free shipping") : "";
   return h`<a class="pcard" href="#/listing/${encodeURIComponent(l.id)}">
-    <div class="art">${listingMedia(l)}<span class="badge ${k.cls}">${k.short}</span>${ready !== undefined && ready !== null ? h`<span class="score" title="Agent Readiness Score"><i>${Math.round(ready)}</i>ready</span>` : ""}${isDemo(l) ? h`<span class="sticker demo-stk">Demo</span>` : ""}</div>
+    <div class="art">${listingMedia(l)}<span class="badge ${k.cls}">${k.short}</span>${ready !== undefined && ready !== null ? h`<span class="score" title="Agent Readiness Score"><i>${Math.round(ready)}</i>ready</span>` : ""}<span class="sticker example-stk">${EXAMPLE_LABEL}</span></div>
     <div class="body">
-      <h3>${l.title}</h3>
+      <h3>${cleanCopy(l.title)}</h3>
       <span class="seller">${st.name || st.slug || "AgentMart seller"}</span>
       ${ratingLine(l)}
       ${stockLabel(l) ? h`<span class="stock">${stockLabel(l)}</span>` : ""}

@@ -29,6 +29,7 @@ async function renderConsole(sub, query) {
   const want = sub && sub[0] && CON_TABS.some(t => t[0] === sub[0]) ? sub[0] : "overview";
   if (query && query.get("next")) C.next = query.get("next");
   if (!Session.get()) { stopEventPoll(); C.tab = want; renderAuth(want); return; }
+  if (C.reg) { drawRegSecret(); return; } // the one-time key screen stays until "Continue"
   if (!Session.me) {
     setHTML(root, h`<div class="con-head"><div class="con-id"><span class="avatar skel" style="width:52px;height:52px"></span><div><div class="skel" style="height:40px;width:260px"></div></div></div></div><div class="kpis">${[1, 2, 3].map(() => h`<div class="card kpi"><div class="skel skel-line w40"></div><div class="skel mt4" style="height:38px;width:60%"></div></div>`)}</div>`);
     try { await loadMe({ force: true, quiet: true }); }
@@ -47,7 +48,7 @@ function drawShell(query) {
   setHTML(root, h`
     <div class="con-head">
       <div class="con-id"><span class="avatar">${robotMini(34)}</span><div style="min-width:0"><span class="eyebrow"><span class="dot"></span>Agent console</span><h1 class="mt3">${a.name || "Your agent"}</h1>
-        <div class="row gap2 wrapx mt2"><code class="small break">${a.id || ""}</code><button type="button" class="btn btn-sm btn-ghost" data-copy data-copy-text="${a.id || ""}" aria-label="Copy agent ID">Copy ID</button>${a.is_demo ? h`<span class="badge b-warn">demo agent</span>` : ""}<span class="badge b-info">sandbox</span></div></div></div>
+        <div class="row gap2 wrapx mt2"><code class="small break">${a.id || ""}</code><button type="button" class="btn btn-sm btn-ghost" data-copy data-copy-text="${a.id || ""}" aria-label="Copy agent ID">Copy ID</button>${a.is_demo ? h`<span class="badge b-warn">Example agent</span>` : ""}<span class="badge b-info">sandbox</span></div></div></div>
       <button type="button" class="btn btn-sm" data-signout>${icon("out", 18)} Sign out</button>
     </div>
     <nav class="con-tabs" aria-label="Console sections">${CON_TABS.map(([k, label]) => h`<a href="#/console/${k}"${raw(C.tab === k ? ' aria-current="page"' : "")}>${label}</a>`)}</nav>
@@ -67,6 +68,7 @@ function renderAuth(want, msg) {
     <div class="page-head"><span class="eyebrow"><span class="dot"></span>Agent console</span><h1 class="h-lg mt4">Your window into an agent.</h1>
       <p class="lede mt4">Register a new agent, or sign in with an existing agent's API key. The console calls the same API your agent uses.</p>
       ${why || msg ? h`<div class="notice mt5">${icon("key")}<div>${msg || why}</div></div>` : ""}</div>
+    ${typeof googleAuthHTML === "function" ? googleAuthHTML() : ""}
     <div class="auth-grid">
       <form class="card" id="regForm" novalidate aria-labelledby="regTitle">
         <h2 class="h-sm" id="regTitle">Register a new agent</h2>
@@ -94,7 +96,8 @@ function renderAuth(want, msg) {
         <button class="btn btn-ink btn-lg btn-block mt4" type="submit">${icon("key")} Sign in</button>
         <div class="notice mt5" style="background:var(--paper)">${icon("shield")}<div class="small">Anyone with this key can spend the agent's wallet. Don't paste it into a shared or public computer.</div></div>
       </form>
-    </div>`);
+    </div>
+    <div class="card dcard" style="margin-bottom:var(--s9)"><h2>Need a hand?</h2><p class="small muted mt2">Lost a key, stuck on setup, or want to list an existing catalog? We read every message.</p><div class="mt4">${contactListHTML()}</div></div>`);
 }
 async function submitRegister(form) {
   clearErrs(form);
@@ -157,7 +160,7 @@ function kpiHTML(w) {
   return h`<div class="kpis">
     <div class="card kpi hl"><div class="lab">Available</div><div class="val">${w ? money2(w.available_cents) : "—"}</div></div>
     <div class="card kpi"><div class="lab">Held in escrow</div><div class="val">${w ? money2(w.held_cents) : "—"}</div></div>
-    <div class="card kpi"><div class="lab">Mode</div><div class="val" style="font-size:30px">${(w && w.mode) || "sandbox"}</div><p class="tiny muted mt2">${w && w.mode === "live" ? "Real money · funded with Stripe Checkout" : "Test credits only. Real payments are coming."}</p></div>
+    <div class="card kpi"><div class="lab">Mode</div><div class="val" style="font-size:30px">${(w && w.mode) || "sandbox"}</div><p class="tiny muted mt2">${w && w.mode === "live" ? "Real money · funded with Stripe Checkout" : "Sandbox credits · live payments on the roadmap"}</p></div>
   </div>`;
 }
 function tabOverview() {
@@ -227,7 +230,7 @@ function tabWallet() {
         <h2 id="depTitle">${live ? "Add funds" : "Add sandbox credits"} <span class="badge ${live ? "b-ok" : "b-info"}">mode: ${live ? "live" : "sandbox"}</span></h2>
         ${live
           ? h`<div class="notice mint mt3">${icon("lock")}<div class="small"><b>Live mode.</b> Deposits open a secure Stripe Checkout page. Your wallet is credited automatically when the payment clears, usually within seconds. Nothing is charged until you finish checkout.</div></div>`
-          : h`<div class="notice mt3">${icon("coin")}<div class="small"><b>Sandbox faucet.</b> These credits aren't real money. Up to $1,000 per deposit and $5,000 in total per agent${faucetLeft !== null ? h`, and <b>${money2(faucetLeft)}</b> is left for this agent` : ""}. Real payments are coming.</div></div>`}
+          : h`<div class="notice mt3">${icon("coin")}<div class="small"><b>Sandbox faucet.</b> Sandbox credits aren't real money. Up to $1,000 per deposit and $5,000 in total per agent${faucetLeft !== null ? h`, and <b>${money2(faucetLeft)}</b> is left for this agent` : ""}. Live payments are on the roadmap.</div></div>`}
         <div class="fgrid mt4">
           ${field("depAmt", "Amount", h`<div class="money"><input class="input" id="depAmt" name="amount_cents" type="number" min="0.5" max="1000" step="0.01" inputmode="decimal" value="100" required></div>`, { name: "amount_cents" })}
           <div class="row gap2 wrapx" role="group" aria-label="Quick amounts">${[25, 100, 500, 1000].map(v => h`<button type="button" class="chip" data-amt="${v}">$${v}</button>`)}</div>
@@ -238,7 +241,7 @@ function tabWallet() {
       </form>
       <form class="card dcard" id="withdrawForm" novalidate aria-labelledby="wdTitle">
         <h2 id="wdTitle">Withdraw</h2>
-        <p class="small muted mt2">Move your available balance out of AgentMart. <code>POST /v1/wallet/withdraw</code>. ${live ? "Live payouts need Stripe Connect, which isn't enabled yet." : "In sandbox mode, withdrawn credits go back to the sandbox treasury."}</p>
+        <p class="small muted mt2">Move your available balance out of AgentMart. <code>POST /v1/wallet/withdraw</code>. ${live ? "Live payouts open once Stripe Connect is switched on." : "In sandbox mode, withdrawn credits go back to the sandbox treasury."}</p>
         <div class="fgrid mt4">${field("wdAmt", "Amount", h`<div class="money"><input class="input" id="wdAmt" name="amount_cents" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="${w ? centsToDollars(w.available_cents) : ""}" required></div>`, { name: "amount_cents", hint: w ? h`Available: ${money2(w.available_cents)}. Funds held in escrow can't be withdrawn.` : "" })}</div>
         <p class="inline-err mt3" data-form-err role="alert"></p>
         <button class="btn btn-lg mt4" type="submit"${raw(live ? " disabled" : "")}>${icon("out")} Withdraw</button>
@@ -247,7 +250,7 @@ function tabWallet() {
         <h2>Payment methods</h2>
         <div class="pm-note mt3">
           <p class="small">Today agents pay from their AgentMart wallet. The wallet is funded by ${live ? "Stripe Checkout" : "the sandbox faucet"}, and escrow makes checkout instant.</p>
-          <div class="notice ink">${icon("key")}<div class="small"><b>Agent payment tokens are coming:</b> Stripe Link and Shared Payment Tokens, and Visa and Mastercard agent tokens. With these, agents can pay with a scoped, revocable token instead of topping up first. The endpoint already exists and answers <code>501 not_implemented</code> until then.</div></div>
+          <div class="notice ink">${icon("key")}<div class="small"><b>On the roadmap, agent payment tokens:</b> Stripe Link and Shared Payment Tokens, and Visa and Mastercard agent tokens. With these, agents can pay with a scoped, revocable token instead of topping up first. The endpoint is live today and answers <code>501 not_implemented</code> until tokens launch.</div></div>
           <div class="row gap3 wrapx"><button type="button" class="btn btn-sm" data-pm-check>Check token support</button><span class="small muted" id="pmResult" role="status"></span></div>
         </div>
       </div>
@@ -344,7 +347,7 @@ function drawCreateStore(existingErr) {
   setHTML(body(), h`<div class="con-grid">
     <form class="card dcard" id="storeForm" novalidate aria-labelledby="stTitle">
       <h2 id="stTitle">Open your store</h2>
-      <p class="small muted mt2">One store per agent in v1. After it's open, you can list physical goods, digital goods and services. <code>POST /v1/stores</code></p>
+      <p class="small muted mt2">One store per agent. After it's open, you can list physical goods, digital goods and services. <code>POST /v1/stores</code></p>
       ${storeFields({})}
       <p class="inline-err mt3" data-form-err role="alert">${existingErr || ""}</p>
       <button class="btn btn-primary btn-lg mt4" type="submit">${icon("store")} Open store</button>
@@ -356,7 +359,8 @@ function drawCreateStore(existingErr) {
         <li><span class="tick">2</span><span>Listings agents can find with <code>search_listings</code>, each with an Agent Readiness Score.</span></li>
         <li><span class="tick">3</span><span>Escrowed orders. You're paid when the buyer confirms, minus 5%.</span></li>
       </ul>
-      <p class="small mt4"><b>v1 is sandbox-only.</b> Sales settle in test credits.</p>
+      <p class="small mt4"><b>Public beta.</b> Sales settle in sandbox credits while live payments roll out.</p>
+      <p class="small mt3">Moving an Amazon or Shopify catalog over, or have questions about selling? Email <a class="link" href="mailto:support@agentmart.us">support@agentmart.us</a> or the founder at <a class="link" href="mailto:shanto@agentmart.us">shanto@agentmart.us</a>.</p>
     </div></div>`);
 }
 function storeFields(s) {
@@ -465,7 +469,7 @@ function listingRowHTML(l) {
   const editing = C.store.editing === l.id;
   return h`<div class="lrow" data-lid="${l.id}">
     <span class="thumb">${listingMedia(l)}</span>
-    <div style="min-width:0"><b>${l.title}</b><div class="row gap2 wrapx mt1"><span class="badge ${(KINDS[l.kind] || {}).cls || ""}">${(KINDS[l.kind] || {}).short || l.kind}</span><span class="badge st-${status}">${status}</span><span class="small mono">${money2(l.price_cents)}</span><span class="small muted">${l.inventory === null || l.inventory === undefined ? "unlimited" : num(l.inventory) + " in stock"}${status === "sold_out" ? " · edit inventory to restock" : ""}</span>${ratingOf(l).count ? h`<span class="small">★ ${Number(ratingOf(l).average).toFixed(1)} (${ratingOf(l).count})</span>` : ""}${l.agent_readiness !== undefined ? h`<span class="small muted">readiness ${l.agent_readiness}</span>` : ""}</div></div>
+    <div style="min-width:0"><b>${cleanCopy(l.title)}</b><div class="row gap2 wrapx mt1"><span class="badge ${(KINDS[l.kind] || {}).cls || ""}">${(KINDS[l.kind] || {}).short || l.kind}</span><span class="badge st-${status}">${status}</span><span class="small mono">${money2(l.price_cents)}</span><span class="small muted">${l.inventory === null || l.inventory === undefined ? "unlimited" : num(l.inventory) + " in stock"}${status === "sold_out" ? " · edit inventory to restock" : ""}</span>${ratingOf(l).count ? h`<span class="small">★ ${Number(ratingOf(l).average).toFixed(1)} (${ratingOf(l).count})</span>` : ""}${l.agent_readiness !== undefined ? h`<span class="small muted">readiness ${l.agent_readiness}</span>` : ""}</div></div>
     <div class="actions"><a class="btn btn-sm btn-ghost" href="#/listing/${encodeURIComponent(l.id)}">View</a><button type="button" class="btn btn-sm" data-l-edit="${l.id}" aria-expanded="${String(editing)}">Edit</button>${status === "active" || status === "sold_out" ? h`<button type="button" class="btn btn-sm" data-l-status="paused" data-id="${l.id}">Pause</button>` : status === "paused" ? h`<button type="button" class="btn btn-sm btn-mint" data-l-status="active" data-id="${l.id}">Activate</button>` : ""}<button type="button" class="btn btn-sm btn-danger" data-l-archive="${l.id}">Archive</button></div>
     ${editing ? h`<form class="edit act-form" data-edit-form="${l.id}" novalidate aria-label="Edit ${l.title}">
       <div class="fgrid">
@@ -728,7 +732,7 @@ function orderRowHTML(o0) {
   const bid = "ob_" + o.id.replace(/[^a-zA-Z0-9_-]/g, "");
   return h`<div class="orow${open ? " open" : ""}" data-oid="${o.id}">
     <button type="button" class="ohead" aria-expanded="${String(open)}" aria-controls="${bid}" data-otoggle="${o.id}">
-      <span class="ot"><b>${o.listing_title || o.listing_id}</b><small>${o.id} · ${o.quantity || 1} × ${money2(o.unit_price_cents)} · ${when(o.created_at)}</small></span>
+      <span class="ot"><b>${cleanCopy(o.listing_title) || o.listing_id}</b><small>${o.id} · ${o.quantity || 1} × ${money2(o.unit_price_cents)} · ${when(o.created_at)}</small></span>
       <span class="badge st-${o.status}">${o.status}</span>
       <span class="amt">${money2(o.total_cents)}</span>
       <span class="chev" aria-hidden="true">${icon("down", 18)}</span>
@@ -763,7 +767,7 @@ function orderDetailHTML(o) {
     <div class="con-grid">
       <table class="kv"><tbody>
         <tr><th scope="row">You are</th><td>${role === "seller" ? "the seller" : "the buyer"}</td></tr>
-        <tr><th scope="row">Listing</th><td><a class="link" href="#/listing/${encodeURIComponent(o.listing_id)}">${o.listing_title || o.listing_id}</a> <span class="badge ${(KINDS[o.kind] || {}).cls || ""}">${o.kind}</span></td></tr>
+        <tr><th scope="row">Listing</th><td><a class="link" href="#/listing/${encodeURIComponent(o.listing_id)}">${cleanCopy(o.listing_title) || o.listing_id}</a> <span class="badge ${(KINDS[o.kind] || {}).cls || ""}">${o.kind}</span></td></tr>
         <tr><th scope="row">Amounts</th><td>${o.quantity} × ${money2(o.unit_price_cents)}${o.shipping_cents ? " + " + money2(o.shipping_cents) + " shipping" : ""} = <b>${money2(o.total_cents)}</b>${role === "seller" && o.fee_cents !== undefined ? h`<br><span class="small muted">Platform fee ${money2(o.fee_cents)} · you receive ${money2(Number(o.total_cents) - Number(o.fee_cents || 0))}</span>` : ""}</td></tr>
         <tr><th scope="row">${role === "seller" ? "Buyer" : "Seller"}</th><td class="mono small break">${role === "seller" ? o.buyer_agent_id : o.seller_agent_id}${o.store_slug && role !== "seller" ? h` · <a class="link" href="#/store/${encodeURIComponent(o.store_slug)}">${o.store_slug}</a>` : ""}</td></tr>
         ${o.note ? h`<tr><th scope="row">Note</th><td>${o.note}</td></tr>` : ""}
@@ -901,7 +905,7 @@ async function tabKeys() {
       <p class="small muted mt2">Use a separate key for each deployment so you can rotate or revoke it without downtime. Only a prefix of each key is stored. The last active key can't be revoked.</p>
       <div id="keySecret"></div>
       <div id="keyList" class="mt4"><div class="skel" style="height:120px"></div></div></div>
-    <div class="card dcard full"><h2>Short-lived tokens</h2><p class="small muted mt2">Swap an API key for a 1-hour HS256 JWT with <code>POST /v1/auth/token</code>. It's handy for handing a limited credential to a sub-agent.</p><div id="tokenBox"></div><button type="button" class="btn btn-sm mt4" data-token>${icon("key", 16)} Get a 1-hour token for this session's key</button></div>
+    <div class="card dcard full"><h2>Short-lived tokens</h2><p class="small muted mt2">Swap an API key for a 1-hour HS256 JWT with <code>POST /v1/auth/token</code>. It's handy for handing a limited credential to a sub-agent.</p><div id="tokenBox"></div>${(Session.get() || "").startsWith("am_live_") ? h`<button type="button" class="btn btn-sm mt4" data-token>${icon("key", 16)} Get a 1-hour token for this session's key</button>` : h`<p class="small muted mt4">You're signed in with Google. Your session token is already a 1-hour token.</p>`}</div>
   </div>`);
   drawKeySecret(); drawToken();
   try {
@@ -915,9 +919,9 @@ const keyActive = k => !k.revoked_at && k.status !== "revoked";
 function drawKeys() {
   const ks = C.keys.items || [];
   const active = ks.filter(keyActive).length;
-  const cur = Session.get() || "";
+  const cur = Session.get() || "", sid = Session.me && Session.me.auth && Session.me.auth.key_id;
   setHTML($("#keyList"), ks.length ? h`<div class="table-wrap"><table class="table"><thead><tr><th scope="col">Key</th><th scope="col">Created</th><th scope="col">Last used</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>
-    ${ks.map(k => { const pre = k.prefix || k.key_prefix || ""; const mine = pre && cur.startsWith(pre); return h`<tr><td><code class="break">${pre ? pre + "…" : keyId(k)}</code><br><span class="tiny muted mono">${keyId(k)}</span>${mine ? h` <span class="badge b-info">this session</span>` : ""}</td><td class="nowrap">${when(k.created_at)}</td><td class="nowrap">${k.last_used_at ? when(k.last_used_at) : h`<span class="muted">never</span>`}</td><td><span class="badge ${keyActive(k) ? "b-ok" : ""}">${keyActive(k) ? "active" : "revoked"}</span></td><td class="right">${keyActive(k) ? h`<button type="button" class="btn btn-sm btn-danger" data-key-revoke="${keyId(k)}"${raw(active <= 1 ? ' disabled title="You can\'t revoke your last active key"' : "")}>Revoke</button>` : ""}</td></tr>`; })}
+    ${ks.map(k => { const pre = k.prefix || k.key_prefix || ""; const mine = (pre && cur.startsWith(pre)) || (sid && keyId(k) === sid); return h`<tr><td><code class="break">${pre ? pre + "…" : keyId(k)}</code><br><span class="tiny muted mono">${keyId(k)}</span>${mine ? h` <span class="badge b-info">this session</span>` : ""}</td><td class="nowrap">${when(k.created_at)}</td><td class="nowrap">${k.last_used_at ? when(k.last_used_at) : h`<span class="muted">never</span>`}</td><td><span class="badge ${keyActive(k) ? "b-ok" : ""}">${keyActive(k) ? "active" : "revoked"}</span></td><td class="right">${keyActive(k) ? h`<button type="button" class="btn btn-sm btn-danger" data-key-revoke="${keyId(k)}"${raw(active <= 1 ? ' disabled title="You can\'t revoke your last active key"' : "")}>Revoke</button>` : ""}</td></tr>`; })}
   </tbody></table></div>` : h`<p class="muted">No keys found.</p>`);
 }
 function drawKeySecret() {
@@ -995,7 +999,7 @@ function tabSettings() {
       <p class="inline-err mt3" data-form-err role="alert"></p>
       <button class="btn btn-ink mt4" type="submit">Save webhook</button>
     </form>
-    <div class="card dcard full" style="background:#FFF0EE"><h2>Sign out</h2><p class="small mt2">Removes the API key from this browser tab. The key itself stays valid. To invalidate it, revoke it in <a class="link" href="#/console/keys">API keys</a>.</p><button type="button" class="btn btn-sm mt4" data-signout>${icon("out", 16)} Sign out</button></div>
+    <div class="card dcard full" style="background:#FFF0EE"><h2>Sign out</h2><p class="small mt2">Removes this session from this browser tab. Your API keys stay valid. To invalidate one, revoke it in <a class="link" href="#/console/keys">API keys</a>.</p><button type="button" class="btn btn-sm mt4" data-signout>${icon("out", 16)} Sign out</button></div>
   </div>`);
   drawWebhookSecret();
 }
@@ -1022,7 +1026,7 @@ async function patchMe(form, bodyObj, fields, okMsg) {
 
 /* ---------- Sign out ---------- */
 async function signOut() {
-  const ok = await confirmDialog({ title: "Sign out of the console?", body: "This removes the API key from this tab. The key stays valid, so make sure it's stored somewhere if you still need it.", confirm: "Sign out" });
+  const ok = await confirmDialog({ title: "Sign out of the console?", body: "This removes the session from this tab. Your API keys stay valid, so make sure they're stored somewhere if you still need them.", confirm: "Sign out" });
   if (!ok) return;
   Session.clear(); stopEventPoll();
   Object.assign(C, { reg: null, keys: { items: null, secret: null }, token: null, webhookSecret: null, store: { listings: null, local: {}, showForm: false, editing: null, editStore: false }, orders: { role: "buyer", status: "", items: [], next: null, loading: false, open: new Set(), detail: {}, openForm: {} } });
@@ -1121,7 +1125,7 @@ function bindConsole() {
       await busy(t, async () => {
         const out = $("#pmResult");
         try { const r = await api("/v1/wallet/payment-methods", { method: "POST", auth: true, body: {}, quiet: true }); out.textContent = "Supported: " + JSON.stringify(r); }
-        catch (e) { out.textContent = e.code === "not_implemented" ? "Not yet available: " + e.message : e.message; }
+        catch (e) { out.textContent = e.code === "not_implemented" ? "On the roadmap: " + e.message : e.message; }
       });
       return;
     }

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="AgentMart Talking Shop mark on dark">
+  <title>AgentMart Talking Shop mark on dark</title>
+  <rect width="512" height="512" fill="#141414"/>
+  <g id="talkshop">
+    <defs><clipPath id="bub-d"><path d="M140 108 H372 a52 52 0 0 1 52 52 V318 a52 52 0 0 1 -52 52 H226 L146 432 L164 370 H140 a52 52 0 0 1 -52 -52 V160 a52 52 0 0 1 52 -52 Z"/></clipPath></defs>
+    <!-- hard offset shadow -->
+    <path d="M140 108 H372 a52 52 0 0 1 52 52 V318 a52 52 0 0 1 -52 52 H226 L146 432 L164 370 H140 a52 52 0 0 1 -52 -52 V160 a52 52 0 0 1 52 -52 Z" transform="translate(20 20)" fill="#FFF4E6"/>
+    <!-- speech-bubble storefront -->
+    <path d="M140 108 H372 a52 52 0 0 1 52 52 V318 a52 52 0 0 1 -52 52 H226 L146 432 L164 370 H140 a52 52 0 0 1 -52 -52 V160 a52 52 0 0 1 52 -52 Z" fill="#2F5BFF"/>
+    <g clip-path="url(#bub-d)">
+      <path d="M88 100 H144 V196 a28 28 0 0 1 -56 0 Z" fill="#FF5B1F"/><path d="M144 100 H200 V196 a28 28 0 0 1 -56 0 Z" fill="#FFF4E6"/><path d="M200 100 H256 V196 a28 28 0 0 1 -56 0 Z" fill="#FF5B1F"/><path d="M256 100 H312 V196 a28 28 0 0 1 -56 0 Z" fill="#FFF4E6"/><path d="M312 100 H368 V196 a28 28 0 0 1 -56 0 Z" fill="#FF5B1F"/><path d="M368 100 H424 V196 a28 28 0 0 1 -56 0 Z" fill="#FFF4E6"/>
+      <path d="M144 108 V196 M200 108 V196 M256 108 V196 M312 108 V196 M368 108 V196" stroke="#141414" stroke-width="8"/>
+      <path d="M88 196 a28 28 0 0 0 56 0 a28 28 0 0 0 56 0 a28 28 0 0 0 56 0 a28 28 0 0 0 56 0 a28 28 0 0 0 56 0 a28 28 0 0 0 56 0" fill="none" stroke="#141414" stroke-width="14" stroke-linejoin="round"/>
+    </g>
+    <path d="M140 108 H372 a52 52 0 0 1 52 52 V318 a52 52 0 0 1 -52 52 H226 L146 432 L164 370 H140 a52 52 0 0 1 -52 -52 V160 a52 52 0 0 1 52 -52 Z" fill="none" stroke="#141414" stroke-width="20" stroke-linejoin="round"/>
+    <!-- eyes glancing at a deal -->
+    <circle cx="200" cy="292" r="44" fill="#FFF4E6" stroke="#141414" stroke-width="14"/>
+    <circle cx="316" cy="292" r="44" fill="#FFF4E6" stroke="#141414" stroke-width="14"/>
+    <circle cx="214" cy="300" r="21" fill="#141414"/>
+    <circle cx="330" cy="300" r="21" fill="#141414"/>
+  </g>
+</svg>

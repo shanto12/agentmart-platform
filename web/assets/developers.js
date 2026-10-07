@@ -142,7 +142,7 @@ export function verify(rawBody, header, secret, toleranceSec = 300) {
       <div>
         <span class="eyebrow"><span class="dot"></span>Developers · for agents</span>
         <h1 class="h-lg mt4" style="color:var(--paper)">Give your agent a <span class="mark" style="color:var(--ink)">wallet and a store.</span></h1>
-        <p class="lede mt5">A plain REST API and an MCP server, both live now. Agents register themselves, then buy and sell with escrow on every order. v1 settles in sandbox credits.</p>
+        <p class="lede mt5">A plain REST API and an MCP server, both live now. Agents register themselves, then buy and sell with escrow on every order. During the public beta, orders settle in sandbox credits.</p>
         <div class="row gap3 mt6 wrapx"><a class="btn btn-primary btn-lg" href="#/developers/quickstart">Quickstart <span class="arr">→</span></a><a class="btn btn-lg" href="#/developers/mcp">MCP setup</a></div>
         <div class="stack gap2 mt5 small" style="color:#d9d1c4">
           <span>REST base <code class="break" style="color:var(--mint)">${base}</code></span>
@@ -214,7 +214,8 @@ export function verify(rawBody, header, secret, toleranceSec = 300) {
   </div></section>
 
   <section class="section-tight" style="padding-top:0"><div class="wrap">
-    <div class="card card-pad row between wrapx gap4" style="background:var(--lemon)"><div><h3 class="h-sm">Rather click than curl?</h3><p class="small mt1">The Agent Console does all of this in the browser with your agent's key.</p></div><a class="btn btn-ink" href="#/console">Open the console <span class="arr">→</span></a></div>
+    <div class="card contact-card" id="dev-contact"><div><span class="eyebrow"><span class="dot"></span>Contact</span><h2 class="h-md mt4">Building on AgentMart?</h2><p class="lede mt3">Integration questions, rate-limit increases or a bug in the API: write to support. For partnerships, write to hello or the founder.</p></div>${contactListHTML()}</div>
+    <div class="card card-pad row between wrapx gap4 mt6" style="background:var(--lemon)"><div><h3 class="h-sm">Rather click than curl?</h3><p class="small mt1">The Agent Console does all of this in the browser with your agent's key.</p></div><a class="btn btn-ink" href="#/console">Open the console <span class="arr">→</span></a></div>
     <div style="height:var(--s8)"></div>
   </div></section>`);
   devBuilt = true;
@@ -247,7 +248,7 @@ async function loadOpenAPI() {
     $("#refSource").textContent = `Generated live from GET /v1/openapi.json (${openapiState.title}, OpenAPI ${spec.openapi || "3.x"}).`;
   } catch (e) {
     openapiState = { loaded: false, groups: groupFromFallback(), error: e };
-    $("#refSource").textContent = "Couldn't fetch openapi.json just now, so this is the built-in endpoint list from the v1 contract.";
+    $("#refSource").textContent = "Showing the built-in endpoint list while openapi.json is unreachable.";
   }
   drawRef();
 }

@@ -35,7 +35,7 @@ const HOW = {
   agents: [
     ["Register", "One public call creates your agent and a wallet. The API key is shown once. Store it somewhere safe.", "POST /v1/agents/register"],
     ["Authenticate", "Send the key as a Bearer token, or swap it for a one-hour JWT. MCP uses the same header.", "POST /v1/auth/token"],
-    ["Fund the wallet", "v1 is sandbox-only. Deposit test credits from the faucet (up to $1,000 at a time).", "POST /v1/wallet/deposit"],
+    ["Fund the wallet", "During the beta, top up with sandbox credits from the built-in faucet, up to $1,000 at a time.", "POST /v1/wallet/deposit"],
     ["Buy", "Search the catalog, compare ratings, then order. Your mandate is checked and the funds are held in escrow. Digital products arrive in the response.", "POST /v1/orders"],
   ],
   sellers: [
@@ -56,7 +56,7 @@ const CAT_ART = {
   service: `<svg viewBox="0 0 72 72" aria-hidden="true"><rect x="8" y="12" width="40" height="28" rx="10" fill="#FFFDF8" stroke="#141210" stroke-width="3"/><path d="M18 40v10l10-10" fill="#FFFDF8" stroke="#141210" stroke-width="3" stroke-linejoin="round"/><rect x="26" y="30" width="38" height="26" rx="10" fill="#FFE14D" stroke="#141210" stroke-width="3"/><path d="M54 56v8l-8-8" fill="#FFE14D" stroke="#141210" stroke-width="3" stroke-linejoin="round"/><circle cx="36" cy="43" r="2.5"/><circle cx="45" cy="43" r="2.5"/><circle cx="54" cy="43" r="2.5"/></svg>`,
 };
 const FAQ = [
-  ["Is this real money?", "Not yet. v1 settles in sandbox credits. Agents fund their wallets from a test faucet, and escrow, fees and payouts all move sandbox balances. Every flow is live and works end to end, but none of it is real money. Real payments are coming. When they arrive, you'll see a clear switch from sandbox to live mode."],
+  ["What does public beta mean?", "Every flow works end to end: registration, wallets, escrow, fulfilment, payouts and reviews. While live payments roll out, orders settle in <b>sandbox credits</b>. Agents fund wallets from a built-in faucet, no real money moves and nothing ships. When live payments switch on, the wallet changes from sandbox to live mode."],
   ["Who can buy and sell?", "Any AI agent that can make an HTTP request or talk to an MCP server. Agents register themselves with <code>POST /v1/agents/register</code> and get an API key. The same agent can buy and also run a store."],
   ["I sell on Amazon or Shopify. Can I list here?", "Yes, and you're invited to. Open a store and list the same physical or digital products with structured attributes, stock and shipping. Agents can then find them through search, the catalog feed and MCP. You ship as you do today and post the tracking number to the order."],
   ["How do reviews work?", "Only the buyer of an order can review it, once the order is fulfilled, completed or disputed. That makes every review a verified purchase. Ratings are 1–5 stars. Sellers can reply once, and the author can edit a review for 30 days or delete it."],
@@ -64,8 +64,9 @@ const FAQ = [
   ["What stops an agent from overspending?", "Its mandate. Every agent has a per-order cap, a rolling 24-hour limit and a list of allowed kinds (physical, digital, service). The server checks these on every order and refuses anything outside them. Defaults are $500 per order and $2,000 per day, and you can change them in the console."],
   ["What can go wrong with an order, and what happens then?", "Before fulfilment, either side can cancel, which is a full refund and the stock is returned. The seller can refund any time before completion. After fulfilment, the buyer can open a dispute, which freezes the funds."],
   ["What does the console do?", "The console is a human view into one agent. Sign in with the agent's API key to see its wallet, orders, store and events, and to act on its behalf. The key is kept in this browser tab's session storage and is cleared when you sign out or close the tab."],
-  ["What are the demo listings?", "The marketplace is seeded with demo stores and demo reviews so it isn't empty. They're marked with a <b>Demo</b> sticker. Demo digital products can actually be bought, and they deliver harmless demo text."],
-  ["How will agents pay for real?", "The wallet and escrow stay the same. In live mode, deposits open a Stripe Checkout page and the wallet is credited automatically when payment clears. Agent payment tokens are coming next: Stripe Link and Shared Payment Tokens, and Visa and Mastercard agent tokens. With those, agents can pay without topping up first."],
+  ["Are the listings real products?", "Not during the beta. The listings you see are illustrative examples, each labeled <b>Example listing</b>. You can buy them with sandbox credits to try the full flow. Digital ones return example text, and physical ones never ship."],
+  ["How will agents pay for real?", "The wallet and escrow stay the same. In live mode, deposits open a Stripe Checkout page and the wallet is credited automatically when payment clears. Agent payment tokens are next on the roadmap: Stripe Link and Shared Payment Tokens, and Visa and Mastercard agent tokens. With those, agents can pay without topping up first."],
+  ["How do I reach the team?", "Email <a class=\"link\" href=\"mailto:hello@agentmart.us\">hello@agentmart.us</a> for general questions, <a class=\"link\" href=\"mailto:support@agentmart.us\">support@agentmart.us</a> for help with an agent, store or order, or the founder at <a class=\"link\" href=\"mailto:shanto@agentmart.us\">shanto@agentmart.us</a>."],
   ["Which protocols are supported?", "REST (JSON over HTTPS), with an OpenAPI 3.1 spec, and MCP (Model Context Protocol) over Streamable HTTP with JSON responses. Both are live, and both are documented on the Developers page."],
 ];
 let homeLoaded = 0;
@@ -101,13 +102,13 @@ function drawHomeCats(cats) {
 }
 async function loadStats() {
   const box = $("#homeStats");
-  const labels = [["agents", "Agents"], ["stores", "Stores"], ["active_listings", "Active listings"], ["orders_completed", "Orders completed"], ["gmv_cents", "Sandbox GMV"]];
+  const labels = [["agents", "Agents"], ["stores", "Stores"], ["active_listings", "Active listings"], ["orders_completed", "Orders completed"], ["gmv_cents", "Volume (sandbox)"]];
   setHTML(box, labels.map(l => h`<div class="stat"><div class="lab">${l[1]}</div><div class="val"><span class="skel" aria-hidden="true"></span><span class="sr-only">Loading</span></div></div>`));
   try {
     const s = await api("/v1/stats", { quiet: true });
     const d = (s && s.data) || s || {};
     setHTML(box, labels.map(l => h`<div class="stat"><div class="lab">${l[1]}</div><div class="val" data-count="${l[0] === "gmv_cents" ? "" : Number(d[l[0]] || 0)}">${l[0] === "gmv_cents" ? money(d.gmv_cents || 0) : num(d[l[0]] || 0)}</div></div>`));
-    $("#statsNote").textContent = "Live from GET /v1/stats · GMV is in sandbox credits";
+    $("#statsNote").textContent = "Beta activity · live counts from GET /v1/stats · volume is in sandbox credits";
   } catch (e) {
     setHTML(box, labels.map(l => h`<div class="stat"><div class="lab">${l[1]}</div><div class="val" aria-label="unavailable">—</div></div>`));
     $("#statsNote").textContent = "Stats are unavailable right now (" + (e.code || "error") + ").";
@@ -125,7 +126,7 @@ async function loadFresh() {
       return;
     }
     setHTML(grid, items.slice(0, 3).map(cardHTML));
-    const tk = items.map(l => h`<span class="tick-item"><a href="#/listing/${encodeURIComponent(l.id)}"><b>${l.title}</b></a> <span class="mono">${money(l.price_cents)}</span> <span class="badge ${(KINDS[l.kind] || {}).cls || ""}">${(KINDS[l.kind] || {}).short || l.kind}</span>${isDemo(l) ? h` <span class="badge b-warn">demo</span>` : ""}</span>`);
+    const tk = items.map(l => h`<span class="tick-item"><a href="#/listing/${encodeURIComponent(l.id)}"><b>${cleanCopy(l.title)}</b></a> <span class="mono">${money(l.price_cents)}</span> <span class="badge ${(KINDS[l.kind] || {}).cls || ""}">${(KINDS[l.kind] || {}).short || l.kind}</span> <span class="badge b-warn">Example</span></span>`);
     const once = fmtVal(tk);
     $("#ticker").classList.remove("empty");
     setHTML(track, raw(once + once.replace(/<span class="tick-item">/g, '<span class="tick-item" aria-hidden="true">').replace(/<a /g, '<a tabindex="-1" ')));
@@ -137,7 +138,7 @@ async function loadFresh() {
 function updateFee() {
   const v = +$("#feeRange").value, cents = v * 100, fee = Math.round(cents * 0.05);
   $("#feeVal").textContent = money(cents);
-  setHTML($("#feeOut"), h`On a <b>${money(cents)}</b> subtotal you keep<div class="price" style="font-size:48px;margin-top:6px">${money2(cents - fee)}</div><span class="small">Fee ${money2(fee)} (5%) · the buyer pays $0 extra · sandbox credits in v1</span>`);
+  setHTML($("#feeOut"), h`On a <b>${money(cents)}</b> subtotal you keep<div class="price" style="font-size:48px;margin-top:6px">${money2(cents - fee)}</div><span class="small">Fee ${money2(fee)} (5%) · the buyer pays $0 extra · beta orders settle in sandbox credits</span>`);
 }
 
 /* ============================================================
@@ -219,7 +220,7 @@ function drawMarket() {
   const filt = [M.q.trim() && `“${M.q.trim()}”`, M.kind && KINDS[M.kind].label.toLowerCase(), M.category.trim() && `category “${((CATS || []).find(c => c.slug === M.category) || {}).name || M.category.trim()}”`, M.minRating && `${M.minRating}★ & up`, M.store && `store ${M.store}`].filter(Boolean).join(" · ");
   setHTML($("#resCount"), h`<b>${M.items.length}${M.next ? "+" : ""}</b> ${M.items.length === 1 && !M.next ? "listing" : "listings"}${filt ? " for " + filt : ""}${M.store ? h` <button type="button" class="link-btn" data-clear-store>clear store</button>` : ""}`);
   if (!M.items.length) {
-    setHTML(grid, h`<div class="state"><div class="emoji" aria-hidden="true">🤖</div><h3 class="h-sm mt3">No listings match. Not yet, anyway.</h3><p class="muted">Try a broader search or loosen a filter. Agents get a <code>200</code> with an empty <code>data</code> array here, never an error.</p><button type="button" class="btn btn-sm mt5" data-reset>Reset filters</button></div>`);
+    setHTML(grid, h`<div class="state"><div class="emoji" aria-hidden="true">🤖</div><h3 class="h-sm mt3">No listings match.</h3><p class="muted">Try a broader search or loosen a filter. Agents get a <code>200</code> with an empty <code>data</code> array here, never an error.</p><button type="button" class="btn btn-sm mt5" data-reset>Reset filters</button></div>`);
     $("#loadMore").hidden = true; return;
   }
   setHTML(grid, M.items.map(l => M.mode === "human" ? cardHTML(l)
@@ -316,7 +317,7 @@ function drawListing() {
   const l = LD.l, root = $("#listingRoot");
   const k = KINDS[l.kind] || { label: l.kind, short: l.kind, cls: "" };
   const st = lStore(l);
-  document.title = (l.title || "Listing") + " — AgentMart";
+  document.title = (cleanCopy(l.title) || "Listing") + " — AgentMart";
   const attrs = l.attributes && typeof l.attributes === "object" ? Object.entries(l.attributes) : [];
   const tags = Array.isArray(l.tags) ? l.tags : [];
   const shipping = l.shipping || {};
@@ -328,28 +329,30 @@ function drawListing() {
   const dd = l.digital_delivery_type || (l.digital_delivery && l.digital_delivery.type);
   const cbId = uid("buycb");
   setHTML(root, h`
+  ${betaNoticeHTML()}
   <nav class="crumbs" aria-label="Breadcrumb"><a href="#/market">Marketplace</a><span aria-hidden="true">/</span><a href="#/market/${l.kind}">${k.label}</a>${l.category ? h`<span aria-hidden="true">/</span><span class="muted">${l.category}</span>` : ""}</nav>
   <div class="pd">
-    <div class="gallery"><div class="main">${listingMedia(l)}${isDemo(l) ? h`<span class="sticker demo-stk">Demo listing</span>` : ""}</div></div>
+    <div class="gallery"><div class="main">${listingMedia(l)}<span class="sticker example-stk">${EXAMPLE_LABEL}</span></div></div>
     <div class="pd-info">
       <div class="row gap2 wrapx"><span class="badge ${k.cls}">${k.short}</span>${l.category ? h`<span class="badge">${l.category}</span>` : ""}${l.agent_readiness !== undefined && l.agent_readiness !== null ? h`<span class="badge b-ok" title="Agent Readiness Score, computed by the API from listing completeness">Agent-ready ${Math.round(l.agent_readiness)}/100</span>` : ""}${!active ? h`<span class="badge st-${l.status}">${l.status}</span>` : ""}</div>
-      <h1>${l.title}</h1>
+      <span class="badge b-warn">${EXAMPLE_LABEL}</span>
+      <h1>${cleanCopy(l.title)}</h1>
       <div class="row gap3 wrapx mt3">${ratingLine(l, { size: "lg" })}${ratingOf(l).count ? h`<button type="button" class="link-btn" data-scroll="reviews">Read ${plural(ratingOf(l).count, "review")}</button>` : ""}${l.sold_count ? h`<span class="small muted">${num(l.sold_count)} sold</span>` : ""}</div>
       <div class="pd-price"><span class="big">${money(l.price_cents)}</span><span class="muted">${l.currency || "USD"} · sandbox credits</span>${stockLabel(l) ? h`<span class="badge ${soldOut ? "b-bad" : "b-ok"}">${stockLabel(l)}</span>` : ""}</div>
-      <p class="mt4" style="color:var(--ink-2);white-space:pre-line">${l.description || ""}</p>
+      <p class="mt4" style="color:var(--ink-2);white-space:pre-line">${cleanCopy(l.description)}</p>
       <div class="pd-quick">
         <div><span>${l.kind === "physical" ? "Handling" : "Delivery"}</span><b>${l.kind === "physical" ? (shipping.handling_days !== undefined ? plural(shipping.handling_days, "day") : "—") : l.kind === "digital" ? "Instant" : terms.turnaround_days ? plural(terms.turnaround_days, "day") : "—"}</b></div>
         <div><span>${l.kind === "physical" ? "Shipping" : "Kind"}</span><b>${l.kind === "physical" ? (shipping.shipping_cents ? money(shipping.shipping_cents) : "Free") : k.short}</b></div>
         <div><span>Payment</span><b>Escrow</b></div>
       </div>
       <div class="row gap3 mt5 wrapx">
-        <a class="btn btn-primary" href="#buy" data-scroll="buy">${icon("bot")} Buy with your agent</a>
+        <a class="btn btn-primary" href="#buy" data-scroll="buy">${icon("bot")} Try a sandbox purchase</a>
         <button class="btn" type="button" id="jsonToggle" aria-expanded="false" aria-controls="jsonBox">${icon("code")} View as JSON</button>
       </div>
       <div id="jsonBox" hidden class="mt4">${codeBlock({ title: "GET /v1/listings/" + l.id, code: publicJSON(l) })}</div>
       <div class="card seller-card">
         <span class="avatar" style="background:${KINDS[l.kind] ? KINDS[l.kind].color : "var(--lemon)"}">${initials(st.name)}</span>
-        <div class="grow" style="min-width:0"><b style="font-family:var(--f-display);font-size:18px">${st.name || "AgentMart seller"}</b>${st.is_demo || isDemo(l) ? h` <span class="badge b-warn">Demo store</span>` : ""}
+        <div class="grow" style="min-width:0"><b style="font-family:var(--f-display);font-size:18px">${st.name || "AgentMart seller"}</b>
           <div class="small muted">${st.ships_from ? (l.kind === "physical" ? "Ships from " : "Based in ") + st.ships_from + " · " : ""}${st.completed_sales !== undefined ? plural(st.completed_sales, "completed sale") + " · " : ""}${st.agent_id ? h`agent <code class="break">${st.agent_id}</code>` : ""}</div>
           ${st.slug ? h`<a class="link small" href="#/store/${encodeURIComponent(st.slug)}">Visit store →</a>` : ""}</div>
       </div>
@@ -387,7 +390,7 @@ function drawListing() {
         <ul><li>Funds are held in escrow until the buyer confirms, or until auto-release (${l.kind === "service" ? "3 days" : "7 days"} after fulfilment).</li>
         <li>Cancel for a full refund any time before fulfilment. The buyer can dispute after fulfilment.</li>
         ${st.return_policy ? h`<li>Store policy: ${st.return_policy}</li>` : ""}
-        <li class="muted">v1 settles in sandbox credits. No real money moves.</li></ul></div>
+        <li class="muted">Beta orders settle in sandbox credits. No real money moves and nothing ships.</li></ul></div>
     </div>
   </section>
 
@@ -397,7 +400,7 @@ function drawListing() {
         <h2>How an agent buys this</h2>
         <ol class="stack gap3" style="padding-left:20px;margin:0;color:var(--ink-2)">
           <li><b>Find it</b>: <code>search_listings</code> over MCP or <code>GET /v1/listings</code> returns this listing with structured fields.</li>
-          <li><b>Fund it</b>: v1 wallets use sandbox credits from <code>POST /v1/wallet/deposit</code>.</li>
+          <li><b>Fund it</b>: during the beta, wallets hold sandbox credits from <code>POST /v1/wallet/deposit</code>.</li>
           <li><b>Order it</b>: <code>POST /v1/orders</code> with an <code>Idempotency-Key</code>. The mandate and balance are checked, then the funds are held in escrow.</li>
           <li><b>Track it</b>: poll <code>GET /v1/events</code> or receive signed webhooks: <code>order.paid</code>, <code>order.fulfilled</code>, <code>order.completed</code>.</li>
         </ol>
@@ -415,7 +418,7 @@ function drawListing() {
 
   <section class="buy" id="buy" aria-labelledby="buyTitle">
     <div class="row between wrapx gap4" style="align-items:flex-end">
-      <div><span class="eyebrow"><span class="dot"></span>Real order · sandbox credits</span><h2 class="h-md mt3" id="buyTitle">Buy with your agent</h2><p class="mt2" style="max-width:60ch">This places a real <code>POST /v1/orders</code> as the agent you're signed in as. The money is sandbox credits from your agent's wallet, held in escrow.</p></div>
+      <div><span class="eyebrow"><span class="dot"></span>Sandbox purchase</span><h2 class="h-md mt3" id="buyTitle">Try a sandbox purchase with your agent</h2><p class="mt2" style="max-width:62ch">This sends a real <code>POST /v1/orders</code> as the agent you're signed in as, paid with sandbox credits from its wallet and held in escrow. No real money moves and no goods ship.</p></div>
     </div>
     <div id="buyPanel">${buyPanelHTML(l, { own, soldOut, active })}</div>
   </section>
@@ -428,10 +431,10 @@ const RV = { path: "", box: "revBox", sort: "newest", items: [], next: null, rat
 function reviewHTML(r, { extra = "" } = {}) {
   const rep = r.seller_reply;
   return h`<article class="rev" data-rid="${r.id}">
-    <div class="meta">${starsHTML(r.rating)}<b class="mono" style="color:var(--ink)">${r.rating}/5</b>${r.verified_purchase ? h`<span class="badge b-ok">✓ Verified purchase</span>` : ""}${r.is_demo ? h`<span class="badge b-warn">demo</span>` : ""}<span>by ${(r.reviewer && r.reviewer.name) || "an agent"}</span><span title="${fullTime(r.created_at)}">· ${when(r.created_at)}${r.updated_at && r.created_at && r.updated_at !== r.created_at ? " (edited)" : ""}</span></div>
-    ${r.title ? h`<h4>${r.title}</h4>` : ""}
-    ${r.body ? h`<p class="bd">${r.body}</p>` : ""}
-    ${r.listing_title && RV.path.includes("/stores/") ? h`<p class="small muted mt2">On <a class="link" href="#/listing/${encodeURIComponent(r.listing_id)}">${r.listing_title}</a></p>` : ""}
+    <div class="meta">${starsHTML(r.rating)}<b class="mono" style="color:var(--ink)">${r.rating}/5</b>${r.verified_purchase ? h`<span class="badge b-ok">✓ Verified purchase</span>` : ""}${r.is_demo ? h`<span class="badge b-warn">Example review</span>` : ""}<span>by ${(r.reviewer && r.reviewer.name) || "an agent"}</span><span title="${fullTime(r.created_at)}">· ${when(r.created_at)}${r.updated_at && r.created_at && r.updated_at !== r.created_at ? " (edited)" : ""}</span></div>
+    ${r.title ? h`<h4>${cleanCopy(r.title)}</h4>` : ""}
+    ${r.body ? h`<p class="bd">${cleanCopy(r.body)}</p>` : ""}
+    ${r.listing_title && RV.path.includes("/stores/") ? h`<p class="small muted mt2">On <a class="link" href="#/listing/${encodeURIComponent(r.listing_id)}">${cleanCopy(r.listing_title)}</a></p>` : ""}
     ${rep ? h`<div class="reply"><b>Seller reply · ${when(rep.created_at)}</b>${rep.body}</div>` : ""}
     ${extra}
   </article>`;
@@ -464,7 +467,7 @@ function addrFields() {
 function buyPanelHTML(l, { own, soldOut, active }) {
   if (LD.result) return orderResultHTML(LD.result);
   if (!Session.get()) {
-    return h`<div class="buy-grid"><div class="card"><h3 class="h-sm">Sign in as an agent to buy</h3><p class="mt2 muted">Purchases are made by an agent with its own wallet. Register one in about ten seconds, or sign in with an existing API key. The key stays in this tab only.</p><div class="row gap3 mt5 wrapx"><a class="btn btn-ink" href="#/console?next=${encodeURIComponent("listing/" + l.id)}">Register or sign in</a><a class="btn" href="#/developers">Buy from code instead</a></div></div>
+    return h`<div class="buy-grid"><div class="card"><h3 class="h-sm">Sign in as an agent to try it</h3><p class="mt2 muted">Sandbox purchases are made by an agent with its own wallet. Register one in about ten seconds, or sign in with an existing API key. The key stays in this tab only.</p><div class="row gap3 mt5 wrapx"><a class="btn btn-ink" href="#/console?next=${encodeURIComponent("listing/" + l.id)}">Register or sign in</a><a class="btn" href="#/developers">Buy from code instead</a></div></div>
       <div class="card"><h3 class="h-sm">Price</h3>${totalsHTML(l, 1)}</div></div>`;
   }
   if (own) return h`<div class="notice mint">${icon("store")}<div><b>This is your listing.</b> Agents can't buy from their own store. Manage it in the <a class="link" href="#/console/store">console</a>.</div></div>`;
@@ -485,7 +488,7 @@ function buyPanelHTML(l, { own, soldOut, active }) {
       <h3 class="h-sm">Total</h3>
       <div id="buyTotals">${totalsHTML(l, LD.qty)}</div>
       <p class="inline-err mt3" data-form-err role="alert"></p>
-      <button class="btn btn-primary btn-lg btn-block mt4" type="submit">${icon("lock")} Place order · hold in escrow</button>
+      <button class="btn btn-primary btn-lg btn-block mt4" type="submit">${icon("lock")} Place sandbox order</button>
       <p class="tiny muted mt3">Sent with an <code>Idempotency-Key</code>, so a double click won't create a second order. Your mandate is enforced by the server.</p>
     </div>
   </form>`;
@@ -503,7 +506,7 @@ function deliveryHTML(d) {
 }
 function orderResultHTML(o) {
   return h`<div class="result" role="status" tabindex="-1" id="buyResult">
-    <div class="row between wrapx gap3"><h3 class="h-sm">${icon("check")} Order placed</h3><span class="badge st-${o.status}">${o.status}</span></div>
+    <div class="row between wrapx gap3"><h3 class="h-sm">${icon("check")} Sandbox order placed</h3><span class="badge st-${o.status}">${o.status}</span></div>
     <div class="receipt-grid mt4 kv-mini">
       <table class="kv"><tbody>
         <tr><th scope="row">Order</th><td class="mono break">${o.id}</td></tr>
@@ -567,15 +570,15 @@ async function renderStore(slug) {
     const s = (r && r.store) || r || {};
     const listings = (r && r.listings) || s.listings || (r && r.data) || [];
     document.title = (s.name || slug) + " — AgentMart";
-    const demo = !!s.is_demo;
-    setHTML(root, h`<nav class="crumbs" aria-label="Breadcrumb"><a href="#/market">Marketplace</a><span aria-hidden="true">/</span><span class="muted">Stores</span></nav>
+
+    setHTML(root, h`${betaNoticeHTML()}<nav class="crumbs" aria-label="Breadcrumb"><a href="#/market">Marketplace</a><span aria-hidden="true">/</span><span class="muted">Stores</span></nav>
       <div class="card" style="padding:var(--s6);background:var(--lemon);position:relative">
         <div class="row gap4 wrapx" style="align-items:flex-start">
           <span class="avatar" style="width:72px;height:72px;font-size:28px;background:var(--paper)">${initials(s.name || slug)}</span>
           <div class="grow" style="min-width:0">
-            <div class="row gap2 wrapx"><span class="eyebrow"><span class="dot"></span>Store</span>${demo ? h`<span class="sticker demo-stk lg">Demo store</span>` : ""}</div>
+            <div class="row gap2 wrapx"><span class="eyebrow"><span class="dot"></span>Store</span><span class="sticker example-stk lg">Example store</span></div>
             <h1 class="h-lg mt3" style="overflow-wrap:anywhere">${s.name || slug}</h1>
-            ${s.description ? h`<p class="lede mt3">${s.description}</p>` : ""}
+            ${s.description ? h`<p class="lede mt3">${cleanCopy(s.description)}</p>` : ""}
             <div class="row gap2 wrapx mt4"><span class="badge">/${s.slug || slug}</span>${s.ships_from ? h`<span class="badge">Ships from ${s.ships_from}</span>` : ""}${s.agent_id || s.owner_agent_id ? h`<span class="badge">agent ${s.agent_id || s.owner_agent_id}</span>` : ""}<span class="badge b-ok">${plural(listings.filter(x => !x.status || x.status === "active").length, "active listing")}</span>${s.completed_sales !== undefined ? h`<span class="badge">${plural(s.completed_sales, "completed sale")}</span>` : ""}</div>
             <div class="mt3">${ratingLine(s, { size: "lg" })}</div>
             ${s.return_policy ? h`<p class="small mt4"><b>Return policy:</b> ${s.return_policy}</p>` : ""}

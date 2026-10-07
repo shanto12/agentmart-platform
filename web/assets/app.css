@@ -1,5 +1,5 @@
 /* ============================================================
-   AgentMart — Prototype C "Open Market"
+   AgentMart — "Open Market" design system
    Tokens → base → components → views → responsive → motion
    ============================================================ */
 :root{
@@ -123,8 +123,8 @@ code,pre,kbd{font-family:var(--f-mono)}
 .verified svg{width:16px;height:16px}
 .sticker{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:var(--b);border-radius:999px;font-family:var(--f-display);font-weight:800;font-size:15px;box-shadow:var(--sh-sm);background:var(--lemon);transform:rotate(-4deg);white-space:nowrap}
 .sticker.r{transform:rotate(5deg)}
-.sample-pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border:1.5px dashed var(--ink);border-radius:999px;background:var(--paper)}
-.sample-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tang)}
+.beta-pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border:1.5px dashed var(--ink);border-radius:999px;background:var(--paper)}
+.beta-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tang)}
 
 /* ---------- Cards ---------- */
 .card{background:var(--paper);border:var(--b);border-radius:var(--r-lg);box-shadow:var(--sh)}
@@ -141,7 +141,7 @@ code,pre,kbd{font-family:var(--f-mono)}
 .nav-in{display:flex;align-items:center;gap:var(--s5);height:72px}
 .logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--f-display);font-weight:800;font-size:23px;letter-spacing:-.04em}
 .logo-mark{width:38px;height:38px;flex:none;transition:transform .3s var(--spring)}
-.logo:hover .logo-mark{transform:rotate(-10deg) scale(1.06)}
+.logo:hover .logo-mark{transform:rotate(-6deg) scale(1.06)}
 .nav-links{display:flex;gap:4px;margin-left:var(--s3)}
 .nav-links a{text-decoration:none;font-weight:600;font-size:15.5px;padding:8px 13px;border-radius:10px;border:2px solid transparent;transition:background .15s,border-color .15s}
 .nav-links a:hover{background:var(--paper);border-color:var(--ink)}
@@ -642,8 +642,8 @@ code,pre,kbd{font-family:var(--f-mono)}
 .fprice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .kind-list{display:grid;gap:2px}
 .pcard .art img{width:100%;height:100%;object-fit:cover;display:block}
-.demo-stk{position:absolute;bottom:10px;right:10px;z-index:2;font-size:12.5px;padding:4px 10px;background:var(--lemon);transform:rotate(-5deg)}
-.demo-stk.lg{position:static;font-size:14px}
+.example-stk{position:absolute;bottom:10px;right:10px;z-index:2;font-size:12.5px;padding:4px 10px;background:var(--lemon);transform:rotate(-5deg)}
+.example-stk.lg{position:static;font-size:14px}
 .load-more{display:flex;justify-content:center;margin-top:var(--s6)}
 .stock{font-size:12.5px;font-family:var(--f-mono);color:var(--muted)}
 .jcard pre{max-height:360px;overflow:auto}
@@ -651,7 +651,7 @@ code,pre,kbd{font-family:var(--f-mono)}
 /* listing detail */
 .gallery .main{aspect-ratio:4/3;border:var(--b);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--sh-lg);background:var(--paper);position:relative}
 .gallery .main svg,.gallery .main img{width:100%;height:100%;object-fit:cover}
-.gallery .main .demo-stk{bottom:16px;right:16px;font-size:15px}
+.gallery .main .example-stk{bottom:16px;right:16px;font-size:15px}
 .buy{margin-top:var(--s8);background:var(--mint);border:var(--b);border-radius:var(--r-xl);box-shadow:var(--sh-lg);padding:var(--s6);position:relative;overflow:hidden}
 .buy-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:var(--s5);margin-top:var(--s5);align-items:start}
 .buy .card{padding:var(--s5)}
@@ -694,7 +694,7 @@ fieldset.field legend{padding:0}
 .sub-card{padding:var(--s4);border:var(--b);border-radius:var(--r);background:var(--cream)}
 .sub-card>h4{font-family:var(--f-mono);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;color:var(--ink-2)}
 
-/* readiness meter (from prototype) */
+/* readiness meter */
 .meter-card{padding:var(--s5);display:grid;grid-template-columns:150px 1fr;gap:var(--s5);align-items:center;position:relative;overflow:hidden}
 
 /* console */
@@ -860,3 +860,41 @@ dialog.dlg .actions{justify-content:flex-end;margin-top:var(--s5)}
 .cat-minor h3{font-size:21px}
 @media (max-width:1020px){.cats{grid-template-columns:1fr 1fr}.cat-minor{grid-column:1/-1}}
 @media (max-width:720px){.cats{grid-template-columns:1fr}}
+
+/* ---------- Launch: beta notice, contact ---------- */
+.example-stk{white-space:nowrap}
+.pcard .example-stk{font-size:12px;padding:4px 9px}
+.beta-notice{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border:var(--b);border-radius:12px;background:var(--lemon-soft);font-size:14.5px;font-weight:500;margin-top:var(--s5)}
+.beta-notice svg{flex:none;margin-top:2px}
+#listingRoot>.beta-notice,#storeRoot>.beta-notice{margin-top:var(--s5)}
+.stats-head{padding:14px var(--gutter) 10px;border-top:var(--b);background:var(--paper)}
+.stats-head+.stats{border-top:0}
+.contact-card{padding:var(--s6);display:grid;grid-template-columns:1fr 1.15fr;gap:var(--s6);align-items:center}
+.contact-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.contact-list li{display:grid;grid-template-columns:78px minmax(0,1fr) auto;grid-template-areas:"lab mail copy" "lab blurb copy";gap:0 12px;align-items:center;padding:12px 14px;border:var(--b);border-radius:12px;background:var(--paper)}
+.contact-list.compact li{grid-template-areas:"lab mail copy"}
+.contact-list .c-lab{grid-area:lab;font-family:var(--f-mono);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.contact-list .c-mail{grid-area:mail;font-weight:700;color:var(--blue);text-underline-offset:3px;overflow-wrap:anywhere;user-select:all}
+.contact-list .c-blurb{grid-area:blurb;font-size:13.5px;color:var(--muted)}
+.contact-list .c-copy{grid-area:copy;box-shadow:none;border-width:2px}
+.foot-contact{margin-top:var(--s6);padding-top:var(--s5);border-top:1px solid rgba(255,255,255,.18)}
+.foot-contact h4{font-size:14px;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--lemon);margin-bottom:var(--s3)}
+.foot-contact ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px 28px;font-size:15px}
+.foot-contact li{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.foot-contact li span{font-family:var(--f-mono);font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.05em}
+.foot-contact a{opacity:1!important;font-weight:600;user-select:all}
+.foot-contact .copy{padding:3px 9px;font-size:11.5px}
+@media (max-width:1020px){.contact-card{grid-template-columns:1fr}}
+@media (max-width:720px){.contact-card{padding:var(--s5)}.contact-list li{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"lab copy" "mail copy" "blurb copy"}.foot-contact ul{flex-direction:column}}
+@media (max-width:720px){
+  .contact-list li{grid-template-columns:minmax(0,1fr);grid-template-areas:"lab" "mail" "blurb" "copy";gap:2px}
+  .contact-list .c-mail{white-space:nowrap;font-size:15.5px;overflow-wrap:normal}
+  .contact-list .c-copy{justify-self:start;margin-top:8px}
+}
+
+/* Sign in with Google (assets/google.js). Reuses .btn; only layout + the "or" rule live here. */
+.g-auth{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s5)}
+.g-auth .btn{width:100%;max-width:440px}
+.g-auth .btn svg{flex:none}
+.g-or{display:flex;align-items:center;gap:var(--s3);width:100%;margin-top:var(--s2);font-family:var(--f-mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.g-or::before,.g-or::after{content:"";flex:1;height:var(--bw);background:var(--line);opacity:.15}
