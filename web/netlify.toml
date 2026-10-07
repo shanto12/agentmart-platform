@@ -71,6 +71,16 @@
   to = "/favicon.svg"
   status = 200
 
+[[redirects]]
+  from = "/privacy/"
+  to = "/privacy/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms/"
+  to = "/terms/index.html"
+  status = 200
+
 # SPA fallback — must stay last
 [[redirects]]
   from = "/*"
