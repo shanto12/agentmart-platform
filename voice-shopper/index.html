@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentMart Voice Shopper — a simulated Alexa+ experience</title>
+<meta name="description" content="A web simulation of an Alexa+ shopping conversation, powered live by AgentMart's public REST API and MCP tool set. Search, compare and shortlist real marketplace listings by goal, budget, type and rating.">
+<meta name="theme-color" content="#FFF5E6">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="voice-shopper.css">
+<script src="../assets/config.js"></script>
+<script src="voice-shopper.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="topbar" role="note">
+  <span><b>Simulated Alexa+ experience.</b> This page is a web simulation of a voice-assistant shopping conversation — it is not Alexa and not an Amazon product. Every result below comes <b>live</b> from AgentMart's public API. AgentMart v1 runs on sandbox credits; no real money moves.</span>
+</div>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="../" aria-label="AgentMart home">
+      <svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="6" width="36" height="32" rx="10" fill="#FF5B1F" stroke="#141210" stroke-width="2.5"/><path d="M13 6c0-5 14-5 14 0" fill="none" stroke="#141210" stroke-width="2.5" stroke-linecap="round"/><rect x="9" y="15" width="22" height="12" rx="6" fill="#141210"/><circle cx="15.5" cy="21" r="2.6" fill="#4FE3A1"/><circle cx="24.5" cy="21" r="2.6" fill="#4FE3A1"/><path d="M15 32h10" stroke="#141210" stroke-width="2.5" stroke-linecap="round"/></svg>
+      AgentMart
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="../">Marketplace home</a>
+      <a href="../#/developers">Developers</a>
+    </nav>
+    <div class="nav-cta">
+      <span class="badge b-info">Alexa+ track · simulation</span>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <div class="wrap vs-head">
+    <span class="eyebrow"><span class="dot"></span>Amazon Developer Hackathon 2026 · Alexa+ track</span>
+    <h1 class="h-lg mt4">Voice Shopper<span class="mark" style="margin-left:14px">simulation</span></h1>
+    <p class="lede mt4">Talk to the marketplace the way you would talk to a voice assistant. State a goal, a budget, a product type and a minimum rating — the shopper plans the request, calls AgentMart's <b>live</b> <code>search_listings</code>, <code>get_listing</code> and <code>get_reviews</code> tools, and shows you every call it made. Nothing here is canned: if the catalogue has no match, the shopper says so.</p>
+  </div>
+
+  <div class="wrap vs-grid">
+    <!-- ============ Conversation column ============ -->
+    <section class="card vs-panel" aria-label="Conversation">
+      <div class="vs-panel-head">
+        <h2 class="h-sm">Conversation</h2>
+        <span class="badge b-ok" id="apiStatus">API: checking…</span>
+      </div>
+
+      <form class="vs-controls" id="vsControls">
+        <div class="field">
+          <label class="flabel" for="fGoal">Shopping goal</label>
+          <input class="input" id="fGoal" type="text" maxlength="200" placeholder="e.g. building AI agents" autocomplete="off">
+        </div>
+        <div class="vs-controls-row">
+          <div class="field">
+            <label class="flabel" for="fBudget">Budget (USD)</label>
+            <div class="money"><input class="input" id="fBudget" type="number" min="0" step="1" inputmode="decimal" placeholder="Any"></div>
+          </div>
+          <div class="field">
+            <label class="flabel" for="fKind">Product type</label>
+            <select class="select" id="fKind">
+              <option value="">Any type</option>
+              <option value="digital">Digital</option>
+              <option value="physical">Physical</option>
+              <option value="service">Service</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel" for="fRating">Min. rating</label>
+            <select class="select" id="fRating">
+              <option value="">Any rating</option>
+              <option value="3">3 ★ &amp; up</option>
+              <option value="4">4 ★ &amp; up</option>
+              <option value="4.5">4.5 ★ &amp; up</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel" for="fCategory">Category</label>
+            <select class="select" id="fCategory">
+              <option value="">All categories</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" type="submit" id="vsSearchBtn">Search with the shopper</button>
+      </form>
+
+      <div class="vs-chips" id="vsChips" aria-label="Try saying">
+        <span class="tiny muted">Try saying:</span>
+      </div>
+
+      <div class="vs-chat" id="vsChat" aria-live="polite" aria-label="Conversation transcript"></div>
+
+      <form class="vs-inputbar" id="vsForm">
+        <label class="sr-only" for="vsInput">Message the Voice Shopper</label>
+        <input class="input" id="vsInput" type="text" maxlength="300" placeholder="Ask for something… e.g. “compare 1 and 2” or “reviews for 1”" autocomplete="off">
+        <button class="btn btn-ink" type="submit">Ask</button>
+      </form>
+      <p class="tiny muted" style="padding:0 4px">Understands: new searches, “cheaper”, “digital only”, “compare 1 and 2”, “shortlist 1”, “details 2”, “reviews 1”. State persists between turns.</p>
+    </section>
+
+    <!-- ============ Results column ============ -->
+    <div class="vs-side">
+      <section class="card vs-panel" aria-label="Live results">
+        <div class="vs-panel-head">
+          <h2 class="h-sm">Live results</h2>
+          <span class="small muted" id="resMeta">No search yet</span>
+        </div>
+        <div class="vs-results" id="vsResults">
+          <div class="state"><div class="emoji" aria-hidden="true">🛒</div><p class="muted">Results from AgentMart's live catalogue will appear here, numbered so you can refer to them in conversation (“compare 1 and 2”).</p></div>
+        </div>
+      </section>
+
+      <section class="card vs-panel" aria-label="Shortlist and comparison">
+        <div class="vs-panel-head">
+          <h2 class="h-sm">Shortlist &amp; comparison</h2>
+          <button class="btn btn-sm btn-ghost" type="button" id="vsClearShortlist">Clear</button>
+        </div>
+        <div id="vsCompare">
+          <p class="muted small">Shortlist at least two listings and the shopper will compare them using live listing details and reviews — highest rating first, then most reviews, then lowest price. The rule is fixed and shown, never hidden.</p>
+        </div>
+      </section>
+
+      <section class="card vs-panel vs-trace-panel" aria-label="Tool-call trace">
+        <div class="vs-panel-head">
+          <h2 class="h-sm">Tool-call trace</h2>
+          <span class="badge">proof, not promises</span>
+        </div>
+        <p class="small muted">Every AgentMart API call this session made, in order. These are the same operations exposed as MCP tools (<code>search_listings</code>, <code>get_listing</code>, <code>get_reviews</code>, <code>list_categories</code>) on AgentMart's MCP server, called here over the equivalent REST endpoints.</p>
+        <ol class="vs-trace" id="vsTrace"></ol>
+      </section>
+    </div>
+  </div>
+
+  <div class="wrap vs-foot">
+    <p class="small muted">AgentMart Voice Shopper — built for the Amazon Developer Hackathon 2026 (Alexa+ track, simulated-experience route). The marketplace launched publicly on October 6, 2026; this conversational layer is the in-window addition. AgentMart is in public beta and settles v1 orders in sandbox credits. Source: <span class="mono">web/voice-shopper/</span> in the AgentMart platform repository.</p>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="foot-bottom">
+      <span>© 2026 AgentMart · A Galaxor AI venture</span>
+      <span>Voice Shopper · simulated Alexa+ experience · live data only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
