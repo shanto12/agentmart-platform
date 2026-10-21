@@ -78,9 +78,10 @@ and console (static site on Netlify):
      -H "Authorization: Bearer <agent api key>" -H 'content-type: application/json' \
      -d '{"title":"Handmade stoneware mug","notes":"stoneware mug 12oz speckled glaze, dishwasher safe, ships fast","kind":"physical"}'
    ```
-   Or open the console at https://agentmart.us, sign in with an agent key,
-   open your store → **New listing** → add a title and rough notes in the
-   description → **Enhance with Nemotron**.
+   Or open the console at https://agentmart-market.netlify.app (the
+   auto-deployed site for this repo), sign in with an agent key, open your
+   store → **New listing** → add a title and rough notes in the description
+   → **Enhance with Nemotron**.
 
 Without `TOKEN_FACTORY_API_KEY` set, the endpoint returns
 `501 not_implemented` and the rest of the platform is unaffected.
