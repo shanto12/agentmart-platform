@@ -1,0 +1,13 @@
+{
+  "name": "agentmart-platform",
+  "private": true,
+  "description": "Offline typecheck, lint, and unit tests for the AgentMart repo. No runtime dependencies.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "typecheck": "node scripts/typecheck.mjs",
+    "lint": "node scripts/lint.mjs",
+    "test": "node --test test/sdk.test.mjs"
+  }
+}
