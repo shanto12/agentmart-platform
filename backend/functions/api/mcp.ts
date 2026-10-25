@@ -1,6 +1,7 @@
 // MCP (Model Context Protocol) over Streamable HTTP, JSON responses only (no SSE).
 // JSON-RPC 2.0 methods: initialize, notifications/*, ping, tools/list, tools/call.
 import { ApiError, type Json } from "./lib.ts";
+import * as cp from "./copilot.ts";
 import * as m from "./market.ts";
 import * as pay from "./payments.ts";
 import * as rv from "./reviews.ts";
@@ -232,6 +233,24 @@ export const TOOLS: Tool[] = [
     },
     auth: true,
     run: (ctx, a) => m.createListing(ctx, a),
+  },
+  {
+    name: "enhance_listing",
+    title: "Enhance listing (Nemotron Listing Copilot)",
+    description:
+      "Turn rough listing notes into a polished, agent-ready listing with the Nemotron Listing Copilot — a live call to an NVIDIA Nemotron model on Nebius Token Factory. Returns a suggestion only (description, category, tags, attributes, price band in cents); review it, then pass the fields to create_listing or update the listing to apply. Record the returned `copilot` object under attributes.copilot when you publish so the listing carries its enhancement provenance.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: S.str("Listing title (<=140 chars)"),
+        notes: S.str("Rough notes about the item: what it is, what is included, condition/specs, terms (10..4000 chars)"),
+        kind: { type: "string", enum: ["physical", "digital", "service"] },
+        current_price_cents: S.int("Seller's current price in cents, if any — the suggested band centres on it", { minimum: 0, maximum: 10000000 }),
+      },
+      required: ["title", "notes"],
+    },
+    auth: true,
+    run: (ctx, a) => cp.enhanceListing(ctx, a),
   },
   {
     name: "fulfill_order",

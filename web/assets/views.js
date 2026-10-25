@@ -317,7 +317,8 @@ function drawListing() {
   const k = KINDS[l.kind] || { label: l.kind, short: l.kind, cls: "" };
   const st = lStore(l);
   document.title = (l.title || "Listing") + " — AgentMart";
-  const attrs = l.attributes && typeof l.attributes === "object" ? Object.entries(l.attributes) : [];
+  const copilot = l.attributes && typeof l.attributes === "object" ? l.attributes.copilot : null;
+  const attrs = l.attributes && typeof l.attributes === "object" ? Object.entries(l.attributes).filter(([a]) => a !== "copilot") : [];
   const tags = Array.isArray(l.tags) ? l.tags : [];
   const shipping = l.shipping || {};
   const terms = l.service_terms || {};
@@ -337,6 +338,7 @@ function drawListing() {
       <div class="row gap3 wrapx mt3">${ratingLine(l, { size: "lg" })}${ratingOf(l).count ? h`<button type="button" class="link-btn" data-scroll="reviews">Read ${plural(ratingOf(l).count, "review")}</button>` : ""}${l.sold_count ? h`<span class="small muted">${num(l.sold_count)} sold</span>` : ""}</div>
       <div class="pd-price"><span class="big">${money(l.price_cents)}</span><span class="muted">${l.currency || "USD"} · sandbox credits</span>${stockLabel(l) ? h`<span class="badge ${soldOut ? "b-bad" : "b-ok"}">${stockLabel(l)}</span>` : ""}</div>
       <p class="mt4" style="color:var(--ink-2);white-space:pre-line">${l.description || ""}</p>
+      ${copilot ? h`<p class="small muted mt2">${icon("spark")} ${copilot.attribution || "Enhanced by NVIDIA Nemotron on Nebius Token Factory"}</p>` : ""}
       <div class="pd-quick">
         <div><span>${l.kind === "physical" ? "Handling" : "Delivery"}</span><b>${l.kind === "physical" ? (shipping.handling_days !== undefined ? plural(shipping.handling_days, "day") : "—") : l.kind === "digital" ? "Instant" : terms.turnaround_days ? plural(terms.turnaround_days, "day") : "—"}</b></div>
         <div><span>${l.kind === "physical" ? "Shipping" : "Kind"}</span><b>${l.kind === "physical" ? (shipping.shipping_cents ? money(shipping.shipping_cents) : "Free") : k.short}</b></div>
@@ -361,6 +363,7 @@ function drawListing() {
     <table class="kv"><tbody>
       ${attrs.map(([a, v]) => h`<tr><th scope="row">${a}</th><td>${typeof v === "object" ? JSON.stringify(v) : String(v)}</td></tr>`)}
       ${tags.length ? h`<tr><th scope="row">Tags</th><td>${tags.join(", ")}</td></tr>` : ""}
+      ${copilot ? h`<tr><th scope="row">Enhanced</th><td>${copilot.attribution || "Enhanced by NVIDIA Nemotron on Nebius Token Factory"}${copilot.model ? h` · model <code>${copilot.model}</code>` : ""}</td></tr>` : ""}
       <tr><th scope="row">Inventory</th><td>${l.inventory === null || l.inventory === undefined ? "Unlimited" : num(l.inventory)}</td></tr>
       ${l.kind === "digital" ? h`<tr><th scope="row">Delivery</th><td>${dd ? dd.replace("_", " ") : "Digital"}: revealed to the buyer in the order response</td></tr>` : ""}
       ${l.kind === "service" && terms.deliverable ? h`<tr><th scope="row">Deliverable</th><td>${terms.deliverable}</td></tr>` : ""}

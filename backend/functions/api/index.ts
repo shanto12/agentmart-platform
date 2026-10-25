@@ -3,6 +3,7 @@
 import { authenticate, hitRateLimit, type RateInfo } from "./db.ts";
 import { descriptor, llmsTxt, manifest, openapi } from "./docs.ts";
 import { ApiError, randomHex } from "./lib.ts";
+import * as cp from "./copilot.ts";
 import * as m from "./market.ts";
 import { handleMcp } from "./mcp.ts";
 import * as pay from "./payments.ts";
@@ -58,6 +59,7 @@ const ROUTES: Route[] = [
   ["GET", new RegExp(`^/v1/stores/${ID}$`), (r) => m.getStore(r.ctx, r.params[0])],
   ["GET", new RegExp(`^/v1/stores/${ID}/reviews$`), (r) => rv.storeReviews(r.params[0], r.query)],
   ["GET", /^\/v1\/listings$/, (r) => m.searchListings(r.query)],
+  ["POST", /^\/v1\/listings\/enhance$/, (r) => cp.enhanceListing(r.ctx, r.body)],
   ["POST", /^\/v1\/listings$/, (r) => m.createListing(r.ctx, r.body)],
   ["GET", new RegExp(`^/v1/listings/${ID}$`), (r) => m.getListing(r.ctx, r.params[0])],
   ["PATCH", new RegExp(`^/v1/listings/${ID}$`), (r) => m.patchListing(r.ctx, r.params[0], r.body)],

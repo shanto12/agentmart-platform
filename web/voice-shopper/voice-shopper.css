@@ -1,0 +1,70 @@
+/* AgentMart Voice Shopper — page-specific styles.
+   Builds on /assets/app.css tokens and components (same design language:
+   cream/paper, 2px ink borders, hard offset shadows, Bricolage + DM Sans). */
+
+.vs-head{padding:var(--s7) 0 var(--s5)}
+.vs-grid{display:grid;grid-template-columns:minmax(380px,5fr) minmax(0,7fr);gap:var(--s5);align-items:start;padding-bottom:var(--s6)}
+.vs-side{display:flex;flex-direction:column;gap:var(--s5);min-width:0}
+.vs-panel{padding:var(--s5)}
+.vs-panel-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s4)}
+.vs-foot{padding-bottom:var(--s8)}
+
+/* ---------- Controls ---------- */
+.vs-controls{display:flex;flex-direction:column;gap:var(--s3);padding-bottom:var(--s4);border-bottom:2px dashed #14121033;margin-bottom:var(--s4)}
+.vs-controls-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.vs-controls .field{display:flex;flex-direction:column;gap:6px}
+.vs-controls .btn{align-self:flex-start}
+
+/* ---------- Chips ---------- */
+.vs-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:var(--s4)}
+.vs-chips .chip{height:auto;min-height:36px;text-align:left;font-size:13.5px;line-height:1.3}
+
+/* ---------- Chat ---------- */
+.vs-chat{display:flex;flex-direction:column;gap:10px;max-height:430px;overflow-y:auto;padding:4px 2px var(--s3);scroll-behavior:smooth}
+.msg{max-width:92%;padding:10px 14px;border:var(--b);border-radius:16px;font-size:15.5px;line-height:1.45;box-shadow:var(--sh-sm)}
+.msg .who{display:block;font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;opacity:.65;margin-bottom:3px}
+.msg-user{align-self:flex-end;background:var(--blue-soft);border-bottom-right-radius:4px}
+.msg-bot{align-self:flex-start;background:var(--paper);border-bottom-left-radius:4px}
+.msg-bot.thinking{background:var(--lemon-soft)}
+.msg-err{background:#FFC9C9}
+.vs-inputbar{display:flex;gap:10px;margin-top:var(--s3)}
+.vs-inputbar .input{flex:1}
+
+/* ---------- Results ---------- */
+.vs-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:var(--s4)}
+.lcard{display:flex;flex-direction:column;border:var(--b);border-radius:var(--r-lg);background:var(--paper);box-shadow:var(--sh);overflow:hidden}
+.lcard-img{height:120px;background:linear-gradient(135deg,var(--tang-soft),var(--lemon-soft));display:grid;place-items:center;font-size:44px;border-bottom:var(--b);position:relative}
+.lcard-img img{width:100%;height:100%;object-fit:cover}
+.lcard-num{position:absolute;top:8px;left:8px;background:var(--ink);color:var(--paper);font-family:var(--f-mono);font-weight:600;font-size:13px;padding:3px 9px;border-radius:999px;border:1.5px solid var(--paper)}
+.lcard-body{padding:14px;display:flex;flex-direction:column;gap:7px;flex:1}
+.lcard-title{font-family:var(--f-display);font-weight:700;font-size:16.5px;line-height:1.15;letter-spacing:-.01em}
+.lcard-desc{font-size:13.5px;color:var(--muted);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lcard-meta{display:flex;flex-wrap:wrap;gap:5px}
+.lcard-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lcard-price{font-family:var(--f-display);font-weight:800;font-size:19px}
+.lcard-actions{display:flex;gap:6px;flex-wrap:wrap}
+.lcard-actions .btn{min-height:32px;padding:0 10px;font-size:13px;border-radius:9px}
+.stars{color:var(--tang);font-size:13.5px;letter-spacing:1px}
+.stars .off{color:#14121033}
+
+/* ---------- Comparison ---------- */
+.cmp-table{width:100%;border-collapse:collapse;font-size:14px}
+.cmp-table th,.cmp-table td{border:1.5px solid var(--ink);padding:7px 9px;text-align:left;vertical-align:top}
+.cmp-table th{background:var(--lemon-soft);font-family:var(--f-display)}
+.cmp-verdict{margin-top:var(--s3);background:var(--mint-soft);border:var(--b);border-radius:var(--r);padding:12px 14px;font-size:15px;box-shadow:var(--sh-sm)}
+.rev-item{border-top:2px dashed #14121033;padding:9px 0;font-size:14px}
+.rev-item:first-of-type{border-top:none}
+.rev-item .who{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;opacity:.65}
+
+/* ---------- Trace ---------- */
+.vs-trace{list-style:none;margin:var(--s3) 0 0;padding:0;font-family:var(--f-mono);font-size:12px;max-height:300px;overflow-y:auto}
+.vs-trace li{padding:7px 9px;border:1.5px solid var(--ink);border-radius:9px;margin-bottom:7px;background:var(--code-bg);color:var(--code-fg);word-break:break-word}
+.vs-trace .t-tool{color:var(--mint);font-weight:600}
+.vs-trace .t-ok{color:var(--lemon)}
+.vs-trace .t-err{color:#FF9D9D}
+.vs-trace .t-meta{opacity:.65}
+
+@media (max-width:980px){
+  .vs-grid{grid-template-columns:1fr}
+  .vs-chat{max-height:none}
+}

@@ -497,7 +497,7 @@ async function patchListing(id, patch, btn, form) {
 }
 
 /* listing creation form with live Agent Readiness meter */
-const blankLF = () => ({ kind: "physical", title: "", description: "", price: "", inventory: "", unlimited: false, category: "", tags: "", image_url: "", attrs: [["", ""], ["", ""], ["", ""]], handling_days: "2", ships_to: "US", shipping: "", dd_type: "text", dd_payload: "", turnaround_days: "", deliverable: "" });
+const blankLF = () => ({ kind: "physical", title: "", description: "", price: "", inventory: "", unlimited: false, category: "", tags: "", image_url: "", attrs: [["", ""], ["", ""], ["", ""]], handling_days: "2", ships_to: "US", shipping: "", dd_type: "text", dd_payload: "", turnaround_days: "", deliverable: "", copilot: null });
 let LF = blankLF(), lastScore = 0;
 function listingFormHTML() {
   const L = LF;
@@ -521,6 +521,12 @@ function listingFormHTML() {
         <div class="field"><span class="flabel" id="lfKindLbl">Kind</span><div class="kindseg" role="group" aria-labelledby="lfKindLbl">${[["physical", "Physical", "you ship it"], ["digital", "Digital", "instant delivery"], ["service", "Service", "work delivered"]].map(o => h`<button type="button" data-lfkind="${o[0]}" aria-pressed="${String(L.kind === o[0])}">${o[1]}<span>${o[2]}</span></button>`)}</div></div>
         ${field("lfTitle", "Title", h`<input class="input" id="lfTitle" name="title" data-lf="title" required maxlength="140" value="${L.title}" placeholder="Say what it is: the variant, size, format">`, { name: "title", hint: "Agents match on specifics. 140 characters max." })}
         ${field("lfDesc", "Description", h`<textarea class="textarea" id="lfDesc" name="description" data-lf="description" required maxlength="5000" rows="4" placeholder="What's included, who it's for, specs, terms…">${L.description}</textarea>`, { name: "description", hint: raw(`<span id="lfDescCount">${L.description.trim().length}</span>/5000 · 80+ helps readiness`) })}
+        <div class="sub-card" id="copilotCard">
+          <h4>${icon("spark")} Nemotron Listing Copilot</h4>
+          <p class="small muted">Write rough notes in the description, then let <b>NVIDIA Nemotron</b> on <b>Nebius Token Factory</b> polish the description, pick the category and tags, extract attributes and suggest a price band. You review and edit everything before publishing — nothing is posted without you.</p>
+          <div id="copilotOut" class="mt3">${copilotStatusHTML()}</div>
+          <div class="actions mt3"><button type="button" class="btn" data-copilot-enhance>${icon("spark")} Enhance with Nemotron</button></div>
+        </div>
         <div class="two">
           ${field("lfPrice", "Price (USD)", h`<div class="money"><input class="input" id="lfPrice" name="price_cents" data-lf="price" type="number" min="0.5" max="100000" step="0.01" inputmode="decimal" required value="${L.price}" placeholder="0.00"></div>`, { name: "price_cents", hint: "Minimum $0.50" })}
           <div>${field("lfInv", "Inventory", h`<input class="input" id="lfInv" name="inventory" data-lf="inventory" type="number" min="0" step="1" inputmode="numeric" value="${L.inventory}"${raw(L.unlimited && L.kind !== "physical" ? " disabled" : "")} placeholder="${L.kind === "physical" ? "e.g. 40" : "count"}">`, { name: "inventory" })}
@@ -542,6 +548,41 @@ function listingFormHTML() {
       <div class="notice small">${icon("spark")}<div>This is an <b>estimate</b> made in your browser. The API computes the official <code>agent_readiness</code> score when you publish.</div></div>
     </div>
   </div>`;
+}
+function copilotStatusHTML() {
+  const cp = LF.copilot;
+  if (!cp) return h`<p class="small muted">Not enhanced yet. The copilot works from your title and the rough notes in the description.</p>`;
+  const band = cp.price_band_cents;
+  return h`<p class="small"><b>Enhanced by Nemotron</b>${cp.model ? h` (${cp.model})` : ""}.${band ? h` Suggested price band: <b>${money2(band.min_cents)} – ${money2(band.max_cents)}</b>, suggested <b>${money2(band.suggested_cents)}</b>.` : ""} Review the fields, then publish — the listing will carry the line “Enhanced by NVIDIA Nemotron on Nebius Token Factory”.</p>`;
+}
+/* Nemotron Listing Copilot: POST /v1/listings/enhance, then apply the suggestion to the form. */
+async function runCopilotEnhance(btn) {
+  const title = LF.title.trim(), notes = LF.description.trim();
+  if (!title) { toast("Add a title first — the copilot needs to know what you are selling.", "bad"); const i = $("#lfTitle"); if (i) i.focus(); return; }
+  if (notes.length < 10) { toast("Add rough notes in the description first (10+ characters) — the copilot polishes what you give it.", "bad"); const i = $("#lfDesc"); if (i) i.focus(); return; }
+  await busy(btn, async () => {
+    try {
+      const body = { title, notes, kind: LF.kind };
+      const pc = dollarsToCents(LF.price);
+      if (pc !== null && !isNaN(pc) && pc > 0) body.current_price_cents = pc;
+      const r = await api("/v1/listings/enhance", { method: "POST", auth: true, body, quiet: true });
+      const s = (r && r.suggestion) || {}, meta = (r && r.copilot) || {};
+      if (s.description) LF.description = s.description;
+      if (s.category) LF.category = s.category;
+      if (Array.isArray(s.tags) && s.tags.length) LF.tags = s.tags.join(", ");
+      if (s.attributes && typeof s.attributes === "object") {
+        const rows = Object.entries(s.attributes).map(([k, v]) => [k, String(v)]);
+        LF.attrs.filter(rw => rw[0].trim() && rw[1].trim() && !(rw[0].trim() in s.attributes)).forEach(rw => rows.push(rw));
+        if (rows.length) LF.attrs = rows;
+      }
+      if (s.price_band_cents && !LF.price) LF.price = (s.price_band_cents.suggested_cents / 100).toFixed(2);
+      LF.copilot = { provider: meta.provider || "Nebius Token Factory", model: meta.model || "", attribution: meta.attribution || "Enhanced by NVIDIA Nemotron on Nebius Token Factory", enhanced_at: meta.enhanced_at || "", price_band_cents: s.price_band_cents || null };
+      redrawListingForm();
+      toast("Enhanced by Nemotron — review the fields, then publish.", "ok");
+    } catch (e) {
+      toast(e.code === "not_implemented" ? "The Nemotron copilot is not switched on for this deployment yet." : (e.message || "Enhancement failed."), "bad");
+    }
+  });
 }
 function meterShell() {
   const Cc = 2 * Math.PI * 62;
@@ -626,6 +667,7 @@ function buildListingBody(form) {
   if (tags.length > 10) { fieldErr(form, "tags", "Up to 10 tags."); bad = true; } else if (tags.length) b.tags = tags;
   if (L.image_url.trim()) { if (!/^https:\/\/\S+$/i.test(L.image_url.trim())) { fieldErr(form, "image_url", "Image URLs must start with https://"); bad = true; } else b.image_url = L.image_url.trim(); }
   const attrs = {}; L.attrs.forEach(([k, v]) => { if (k.trim() && v.trim()) attrs[k.trim()] = v.trim(); });
+  if (L.copilot) attrs.copilot = { provider: L.copilot.provider, model: L.copilot.model, attribution: L.copilot.attribution, enhanced_at: L.copilot.enhanced_at, price_band_cents: L.copilot.price_band_cents };
   if (Object.keys(attrs).length) b.attributes = attrs;
   if (L.kind === "physical") {
     const hd = String(L.handling_days).trim(), sc = L.shipping === "" ? 0 : dollarsToCents(L.shipping), to = splitTags(L.ships_to).map(s => s.toUpperCase());
@@ -1129,6 +1171,7 @@ function bindConsole() {
     if (d.storeEdit !== undefined) { C.store.editStore = d.storeEdit === "1"; drawStore(); const f = $("#storeEditForm input"); if (f) f.focus(); return; }
     if (t.hasAttribute("data-new-listing")) { C.store.showForm = !C.store.showForm; drawStore(); if (C.store.showForm) { const i = $("#lfTitle"); if (i) i.focus(); } else { const b = $("[data-new-listing]"); if (b) b.focus(); } return; }
     if (d.lfkind) { LF.kind = d.lfkind; if (LF.kind !== "physical" && LF.inventory === "") LF.unlimited = true; redrawListingForm(); const b = $(`[data-lfkind="${d.lfkind}"]`); if (b) b.focus(); return; }
+    if (t.hasAttribute("data-copilot-enhance")) { runCopilotEnhance(t); return; }
     if (t.hasAttribute("data-addattr")) { if (LF.attrs.length < 20) { LF.attrs.push(["", ""]); redrawListingForm(); const ins = $$("#lfAttrs input"); ins[ins.length - 2].focus(); } return; }
     if (d.delattr !== undefined) { LF.attrs.splice(+d.delattr, 1); if (!LF.attrs.length) LF.attrs.push(["", ""]); redrawListingForm(); updateMeter(); return; }
     if (d.lEdit) { C.store.editing = C.store.editing === d.lEdit ? null : d.lEdit; drawStore(); const i = $(`[data-edit-form="${CSS.escape(d.lEdit)}"] input`); if (i) i.focus(); else { const b = $(`[data-l-edit="${CSS.escape(d.lEdit)}"]`); if (b) b.focus(); } return; }

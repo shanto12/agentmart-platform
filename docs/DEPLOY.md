@@ -117,6 +117,9 @@ supabase secrets set --project-ref $REF \
 | `STRIPE_SUCCESS_URL` / `STRIPE_CANCEL_URL` | optional | Checkout redirect targets (default `<base>/v1/payments/stripe/return?...`). `{CHECKOUT_SESSION_ID}` is substituted by Stripe. |
 | `STRIPE_API_BASE` | tests only | Point at a Stripe mock. |
 | `AGENTMART_ALLOW_INSECURE_WEBHOOKS` | never in prod | `true` allows http/private webhook URLs for local testing. |
+| `TOKEN_FACTORY_API_KEY` | Nemotron Listing Copilot only | Nebius Token Factory API key. **Enables `POST /v1/listings/enhance`** (and the MCP `enhance_listing` tool): live calls to an NVIDIA Nemotron model that polish rough listing notes into structured listings. Unset → the endpoint returns 501 and everything else is unaffected. |
+| `TOKEN_FACTORY_BASE_URL` | optional | Token Factory base URL (default `https://api.tokenfactory.nebius.com/v1`). |
+| `TOKEN_FACTORY_MODEL` | optional | Nemotron model id (default `nvidia/Nemotron-3.5-Super-VL`). |
 
 ```bash
 supabase secrets list --project-ref $REF
